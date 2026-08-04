@@ -369,3 +369,160 @@ LLM 可根据代码语义灵活判断。
 3. **关键数字追踪：** progress.json 中的 `api_total`、`api_analyzed`、`api_kept` 提供了整体进度概览。恢复时交叉验证：如果 `api_analyzed` 与 `analysis_state.json` 中 `status = "completed"` 的条目数不一致，以 `analysis_state.json` 的实际状态为准，修正 progress.json。
 
 4. **恢复入口：** 在分析每个接口之前，先根据 progress.json 判断是全新分析还是断点恢复。恢复时重新读取 analysis_state.json，从断点继续。
+
+---
+
+## 四、最终输出
+
+全部接口分析完成后（`api_list` 中所有条目 status = `"completed"`），生成两个输出文件。
+
+### 4.1 api-clean.json
+
+从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api-clean.json`：
+
+```json
+[
+  {"name": "func_a", "file": "/abs/path/to/a.c"},
+  {"name": "func_c", "file": "/abs/path/to/c.c"}
+]
+```
+
+格式与 api-finder 的 `api.json` 一致，仅包含 name 和 file 两个字段。
+
+### 4.2 summary.md
+
+写入 `<project_dir>/.ethunter_out/api-cleaner/summary.md`：
+
+```markdown
+# 接口去误报分析报告 — <project_dir>
+
+## 分析概要
+- 输入接口数: <api_total>
+- 保留: <api_kept>
+- 排除: <api_total - api_kept>
+
+## 保留接口
+
+### 1. <函数名> — <文件绝对路径>
+- **接口形式:** parameter_input|channel_read|both
+- **通信边界:** <该接口与哪个外部模块通信，通过什么信道>
+- **外部输入:** <接收什么外部输入，来自哪里>
+- **保留原因:** <综合裁决理由>
+
+（保留接口按 api.json 中的原始顺序排列）
+
+## 排除接口
+
+### <编号>. <函数名> — <文件绝对路径>
+- **排除原因:** <具体排除证据>
+```
+
+### 4.3 完成
+
+更新 `progress.json`：`phase = "done"`。
+
+告知用户分析完成，报告关键数字：
+- 输入接口数、保留数、排除数
+- 输出文件路径：`<project_dir>/.ethunter_out/api-cleaner/api-clean.json` 和 `summary.md`
+
+---
+
+## 五、约束规则
+
+1. **所有分析由主 agent 完成，不使用 sub-agent 并行分析。** 不要调用 Agent 工具分派子任务。
+
+2. **分析质量优先于分析效率。** 宁可慢不可草率。每个接口的源码必须认真阅读，大文件分批读取（每次 500-2000 行）。
+
+3. **误报优先原则。** 规则判断边界模糊时倾向排除。不确定就排除。
+
+4. **reason 字段必须具体。** 不使用"看起来像"、"可能是"、"应该"等模糊描述。每条原因必须包含具体的代码证据。
+
+5. **逐接口保存状态。** 每分析完一个接口立即写入 analysis_state.json 和 progress.json，防止中断丢失进度。
+
+6. **文件存在性检查严格遵循双方法+判断规则。** 禁止使用 `test -f` 或 `[ -f ]`，必须使用两种不同方法交叉确认。
+
+7. **文件绝对路径。** 所有 JSON 中的 file 字段一律使用绝对路径。
+
+8. **SKILL 全部提示词使用中文。** 相同语义的用词前后保持一致。
+
+9. **代码溯源要深入。** 判断调用关系、分析参数用途时，需要追踪代码定义和使用点，不要只看表面名称和注释就下结论。
+
+10. **适用业务。** 本 skill 适用于嵌入式/底层系统代码（Linux 内核驱动、UEFI/BL31/BL2/XLoader、ISP/SensorHub/GPU 固件）。
+
+---
+
+## 六、权限申请
+
+本 skill 运行时需要以下工具权限：
+
+| 工具 | 用途 |
+|------|------|
+| `Bash` | find 枚举文件、grep 搜索代码/调用关系、ls 检查文件、mkdir 创建目录 |
+| `Read` | 读取源码、api.json、summary.md、arch.md、各阶段 JSON 状态文件 |
+| `Write` | 写入 progress.json、analysis_state.json、api-clean.json、summary.md |
+| `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
+| `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
+
+如果环境中未安装 codegraph 或未配置 MCP，不中断分析，使用常规工具（grep、find、Read）代替。
+
+---
+
+## 七、抗理性化检查
+
+当你在分析过程中产生以下想法时，STOP：
+
+| 想法 | 现实 |
+|------|------|
+| "接口太多了，我加快一点" | 分析质量优先于效率。每个接口的源码一行不能少。 |
+| "这个接口看起来就是外部接口，不用深入查了" | 必须深入阅读验证，不能凭感觉判断。 |
+| "api-finder 的 summary.md 说这是外部接口，直接保留吧" | cleaner 需要独立分析，summary.md 仅作参考。 |
+| "这个函数可能也是测试函数，但不太确定，先保留吧" | 不确定时倾向排除。误报优先原则。 |
+| "内部调用者判断可能不太准确，先保留吧" | 引用点必须逐一排查，确认无内部调用者才能保留。 |
+| "这个状态文件检查结果不太确定，先继续吧" | 文件存在性检查必须严格遵循双方法+判断规则。 |
+
+---
+
+## 八、使用示例
+
+### 首次分析
+
+```
+用户: /api-cleaner /srv/workspace/work_code/src
+
+Agent:
+  [初始化] 分析范围: 127 个 .c/.h 文件。
+  [输入检查] api.json (15个接口)、summary.md、arch.md 均存在。
+  [恢复检查] 未发现 progress.json，全新分析开始。
+
+  [逐接口分析] 15 个待分析接口...
+    → 接口 1/15: func_a — 保留 (parameter_input, 与ioctl边界关联)
+    → 接口 2/15: func_b — 排除 (测试函数, test/ 目录下)
+    → 接口 3/15: func_c — 排除 (被 func_x 内部调用, src/dispatch.c:156)
+    → 接口 4/15: func_d — 排除 (仅有 int flags 一个外部输入参数, 非内存地址)
+    → 接口 5/15: func_e — 排除 (无入参且无信道读取)
+    → ...
+    → 接口 15/15: func_o — 保留 (channel_read, 从共享内存读取)
+
+  分析完成。
+  输入: 15 个接口 | 保留: 6 | 排除: 9
+  输出: /srv/workspace/work_code/src/.ethunter_out/api-cleaner/api-clean.json
+        /srv/workspace/work_code/src/.ethunter_out/api-cleaner/summary.md
+```
+
+### 断点续分析
+
+```
+用户: /api-cleaner /srv/workspace/work_code/src
+
+Agent:
+  [初始化] 分析范围: 127 个 .c/.h 文件。
+  [输入检查] api.json、summary.md、arch.md 均存在。
+  [恢复检查] 发现 progress.json，api_analyzed = 7/15，从接口 8 继续。
+
+  [逐接口分析] 剩余 8 个接口...
+    → 接口 8/15: func_h — 保留
+    → ...
+    → 接口 15/15: func_o — 保留
+
+  分析完成。保留: 6 | 排除: 9
+```
