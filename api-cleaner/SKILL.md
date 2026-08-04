@@ -149,7 +149,8 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
       "status": "completed|in_progress|pending",
       "form": null,
       "decision": null,
-      "reason": null
+      "reason": null,
+      "taint_data": null
     }
   ]
 }
@@ -271,6 +272,8 @@ LLM 可根据代码语义灵活判断。
 
 记录外部输入参数列表。如果列表为空 → **排除**（无外部输入）。
 
+将识别出的外部输入参数名记录到 `taint_data` 字段。例如：`"data, len"`（两个参数都是外部输入）、`"buf"`（仅 buf 是外部输入）。
+
 **重要：** 大多数情况下，外部数据以指针形式传递。判断时要仔细分析每个参数的实际用途，不要看到有参数就认为有外部输入。
 
 #### c. 整数型参数特殊处理
@@ -312,6 +315,8 @@ LLM 可根据代码语义灵活判断。
 
 如果函数体内同时有读取和写入操作 → **保留**（只要存在读取操作，就有外部输入）。
 
+将信道读取的变量/来源记录到 `taint_data` 字段。例如：`"共享内存 shm_ptr"`、`"IPC msgrcv → msg_buf"`、`"readl(MMIO_BASE) → status_reg"`。
+
 #### b. 单整数读取排除
 
 如果从信道**仅读取了一个整数数据**（且非内存地址），→ **排除**。
@@ -341,7 +346,8 @@ LLM 可根据代码语义灵活判断。
   "status": "completed",
   "form": "parameter_input|channel_read|both|none",
   "decision": "keep|exclude",
-  "reason": "<具体证据，不使用模糊描述>"
+  "reason": "<具体证据，不使用模糊描述>",
+  "taint_data": "<外部输入变量名或来源>"
 }
 ```
 

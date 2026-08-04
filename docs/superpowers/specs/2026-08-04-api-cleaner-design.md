@@ -118,7 +118,8 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
       "status": "completed|in_progress|pending",
       "form": null,
       "decision": null,
-      "reason": null
+      "reason": null,
+      "taint_data": null
     }
   ]
 }
@@ -243,7 +244,8 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
   "status": "completed",
   "form": "parameter_input|channel_read|both",
   "decision": "keep|exclude",
-  "reason": "<具体证据，不使用模糊描述>"
+  "reason": "<具体证据，不使用模糊描述>",
+  "taint_data": "<外部输入变量名或来源>"
 }
 ```
 
