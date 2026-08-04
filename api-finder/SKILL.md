@@ -234,9 +234,17 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
      {"name": "FUNC_NAME", "file": "FILE_PATH"},
      ...
    ]
-   逐一检查每个条目：该接口的 file 字段是否在 scope_files 中存在？
+   逐一检查每个条目，分两步验证：
+
+   Step 2a — 文件路径检查：该接口的 file 字段是否在 scope_files 中存在？
    ├── 不在 scope_files 中 → 排除（文件可能已被删除或不在本次分析范围）
-   └── 在 scope_files 中 → 计入继承接口列表
+   └── 在 scope_files 中 → 继续 Step 2b
+
+   Step 2b — 函数存在性检查：在该文件中搜索函数定义是否依然存在。
+      使用 `grep -n "<函数名>" <文件路径>` 搜索，确认文件中存在该函数的定义
+      （不仅匹配声明/引用，需要确认有函数体定义。例如匹配 `函数名(` 后跟 `{` 的模式）。
+      ├── 函数定义不存在 → 排除（函数可能已被删除、重命名或移到了其他文件）
+      └── 函数定义存在 → 计入继承接口列表
 
 3. 将继承接口列表写入 <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json，
    格式与 old_api.json 一致。
@@ -244,7 +252,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 4. 更新 progress.json：inherit.status = "completed"，phase = "feature"。
 ```
 
-本阶段不涉及代码阅读，仅做文件路径级别的比对。
+本阶段仅做文件路径比对和函数名搜索，不涉及深度代码阅读。
 
 ---
 
