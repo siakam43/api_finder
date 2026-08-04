@@ -172,7 +172,7 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
 
 **a. 内部调用者检查（关键新增规则）**
 
-在 `scope_files` 范围内搜索该函数的所有引用点：
+在 `project_dir` 范围内搜索该函数的所有引用点：
 - 优先用 `codegraph_explore` 查询调用关系
 - 否则用 `grep -rn "函数名"` 搜索
 
@@ -289,7 +289,7 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
 ## 排除接口
 
 ### 3. func_b — /abs/path/to/b.c
-- **排除原因:** 在 scope_files 中被 func_x 直接调用，属于内部传递，func_x 更适合作为外部接口
+- **排除原因:** 在 project_dir 中被 func_x 直接调用，属于内部传递，func_x 更适合作为外部接口
 ```
 
 更新 `progress.json`：`phase = "done"`。告知用户分析完成。
