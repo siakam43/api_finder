@@ -82,6 +82,8 @@ Step 1: project_dir 默认为当前目录
 
 Step 2: 检查 project_dir/.ethunter_out/
   ├── 存在 clean_code.txt → 按行读取文件路径，作为分析范围。
+  │     路径可能是绝对路径或相对于 project_dir 的相对路径。
+  │     相对路径需拼接 project_dir 前缀转为绝对路径。
   │     clean_code.txt 中可能包含实际不存在的文件路径，忽略即可。
   ├── 不存在 clean_code.txt 但存在 .etignore → 收集 project_dir 下全部 .c/.h，
   │     按 .etignore 语法排除
