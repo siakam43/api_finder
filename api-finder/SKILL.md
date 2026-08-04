@@ -48,7 +48,9 @@ description: Use when the user invokes /api-finder or asks to identify external 
 - 方法一：`ls <project_dir>/.ethunter_out/clean_code.txt`
 - 方法二：`Read` 工具尝试读取
 
-确认存在后，读取 clean_code.txt，每一行是一个文件的绝对路径，将这些文件作为分析范围（scope_files）。注意：可能存在重复路径，需要去重。
+确认存在后，读取 clean_code.txt，每一行是一个文件的绝对路径，将这些文件作为分析范围（scope_files）。注意：
+- clean_code.txt 中列出的文件可能实际不存在于磁盘上，逐一检查后将不存在的文件忽略即可，不影响分析流程。
+- 可能存在重复路径，需要去重。
 
 **情况B — clean_code.txt 不存在但 .etignore 存在：**
 
