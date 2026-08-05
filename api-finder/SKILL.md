@@ -633,13 +633,13 @@ b. 确认读取的数据来源：
 {
   "api_total": <api_pool条目数>,
   "api_list": [
-    {"name": "<函数名>", "file": "<文件路径>", "reviewed": false, "decision": null, "reason": null},
+    {"name": "<函数名>", "file": "<文件路径>", "reviewed": false, "decision": null, "reason": null, "validated": false},
     ...
   ]
 }
 ```
 
-全新启动时，将 api_pool 中全部条目写入 api_list，清空 decision/reason。
+全新启动时，将 api_pool 中全部条目写入 api_list，清空 decision/reason，validated 设为 false。
 
 更新 progress.json：`filter.status = "in_progress"`，`phase = "filter"`。
 
