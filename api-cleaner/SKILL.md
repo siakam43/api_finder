@@ -181,6 +181,22 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
 - codegraph 不可用时，使用 `grep -rn "<函数名>" <文件路径>` 定位函数定义行，然后用 Read 读取该函数完整代码
 - 如果文件超过 2000 行，分批读取（每次 2000 行）
 
+### 2.1.1 文件校验
+
+读取源码后，执行以下两层校验，任何一层不通过则直接排除该接口，跳到下一个接口处理：
+
+1. **函数定义验证：** 确认 `file` 指向的文件中包含该函数定义（函数名后跟 `(` 且最终包含 `{` 的函数体定义）。
+   - 包含函数定义 → 通过，`file` 不变
+   - 不包含函数定义 → 在全部 scope_files 中搜索该函数定义
+     - 找到 → 更新 `file` 为正确的定义文件绝对路径，同步更新 analysis_state.json 中的 `file` 字段
+     - 找不到 → `decision` 改为 `"exclude"`，`reason` 记录 `"函数定义未找到"`，跳过后续分析
+
+2. **分析范围验证：** 校验 `file` 是否在 scope_files 列表中。
+   - 在 scope_files 中 → 通过，进入 2.2 快速排除检查
+   - 不在 scope_files 中 → `decision` 改为 `"exclude"`，`reason` 记录 `"接口不在代码分析范围内"`
+
+校验通过更新后，立即保存 analysis_state.json。
+
 ### 2.2 快速排除检查
 
 先执行轻量级排除，命中任一规则则直接记录 decision = `"exclude"`，跳过后续深入分析：
