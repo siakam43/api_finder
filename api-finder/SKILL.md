@@ -718,9 +718,29 @@ b. 确认读取的数据来源：
 
 7. 继续下一条 `reviewed = false` 的条目，直到全部审查完毕。
 
+### 分析范围校验
+
+逐条审查循环完成后，对 api_list 中所有 `decision = "keep"` 且 `validated = false` 的条目执行以下校验：
+
+1. **函数定义验证：** 在 `file` 指向的文件中用 grep 搜索函数定义（匹配模式：函数名后跟 `(` 且最终包含 `{` 的函数体定义）。
+   - 包含函数定义 → 通过，`file` 不变
+   - 不包含函数定义 → 在全部 scope_files 中搜索该函数定义
+     - 找到 → 更新 `file` 为正确的定义文件绝对路径
+     - 找不到 → `decision` 改为 `"exclude"`，`reason` 记录 `"函数定义未找到"`
+
+2. **分析范围验证：** 校验 `file` 是否在 scope_files 列表中。
+   - 在 scope_files 中 → 通过
+   - 不在 scope_files 中 → `decision` 改为 `"exclude"`，`reason` 记录 `"接口不在代码分析范围内"`
+
+3. 将 `validated` 设为 `true`。
+4. **每校验完一条就保存一次 filter_state.json**，防止中断丢失进度。
+5. 继续下一条 `validated = false` 的条目，直到全部校验完毕。
+
+**断点恢复时**，跳过 `validated = true` 的条目，从第一个 `validated = false` 的条目继续校验。
+
 ### 输出结果
 
-从 api_list 中提取所有 `decision = "keep"` 的条目，按原始顺序写入：
+从 api_list 中提取所有 `decision = "keep"` 且 `validated = true` 的条目，按原始顺序写入：
 
 1. **api.json** — `<project_dir>/.ethunter_out/api-finder/api.json`：
 
