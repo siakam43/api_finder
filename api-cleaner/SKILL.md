@@ -497,7 +497,7 @@ LLM 可根据代码语义灵活判断。
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。
-  [输入检查] api.json (15个接口)、cleaner_summary.md、arch.md 均存在。
+  [输入检查] api.json (15个接口)、finder_summary.md、arch.md 均存在。
   [恢复检查] 未发现 progress.json，全新分析开始。
 
   [逐接口分析] 15 个待分析接口...
@@ -522,7 +522,7 @@ Agent:
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。
-  [输入检查] api.json、cleaner_summary.md、arch.md 均存在。
+  [输入检查] api.json、finder_summary.md、arch.md 均存在。
   [恢复检查] 发现 progress.json，api_analyzed = 7/15，从接口 8 继续。
 
   [逐接口分析] 剩余 8 个接口...
