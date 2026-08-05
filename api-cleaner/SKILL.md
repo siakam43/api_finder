@@ -195,7 +195,7 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
    - 在 scope_files 中 → 通过，进入 2.2 快速排除检查
    - 不在 scope_files 中 → `decision` 改为 `"exclude"`，`reason` 记录 `"接口不在代码分析范围内"`
 
-校验通过更新后，立即保存 analysis_state.json。
+如果校验中修改了 `file` 字段，立即保存 analysis_state.json。
 
 ### 2.2 快速排除检查
 
