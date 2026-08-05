@@ -82,7 +82,7 @@ find <project_dir> -type f \( -name "*.c" -o -name "*.h" \)
 用两种方法交叉确认 api-finder 的输出文件是否存在。以下三个文件**必须全部存在**，任何一个缺失都应报错退出（无输入数据无法继续分析）：
 
 - `<project_dir>/.ethunter_out/api-finder/api.json` — 外部接口列表（输入）
-- `<project_dir>/.ethunter_out/api-finder/summary.md` — 接口识别理由（参考）
+- `<project_dir>/.ethunter_out/api-finder/finder_summary.md` — 接口识别理由（参考）
 - `<project_dir>/.ethunter_out/api-finder/arch.md` — 项目架构分析（复用）
 
 两种检查方法：
@@ -216,7 +216,7 @@ LLM 可根据代码语义灵活判断。
 函数是否有入参？如果有，参数中是否存在可能携带外部数据的指针/缓冲区/结构体？需注意：
 - 系统框架类参数（如 `struct file *f`、`struct inode *i`）不是外部输入
 - 输出类参数（如 `void *out_buffer`、`int *result`）不是外部输入
-- api-finder 给出的 form 类型（如果 summary.md 中有记录）仅供参考和验证，cleaner 独立判断
+- api-finder 给出的 form 类型（如果 finder_summary.md 中有记录）仅供参考和验证，cleaner 独立判断
 
 **channel_read 判断：**
 
@@ -293,7 +293,7 @@ LLM 可根据代码语义灵活判断。
 
 #### d. 通信边界关联验证
 
-参考 `<project_dir>/.ethunter_out/api-finder/summary.md` 中该接口的识别理由，以及 `<project_dir>/.ethunter_out/api-finder/arch.md` 中的"外部通信边界"表。
+参考 `<project_dir>/.ethunter_out/api-finder/finder_summary.md` 中该接口的识别理由，以及 `<project_dir>/.ethunter_out/api-finder/arch.md` 中的"外部通信边界"表。
 
 确认该接口是否能与 arch.md 中的某个通信边界明确关联：
 - 该接口与哪个外部模块/实体通信？
@@ -464,7 +464,7 @@ LLM 可根据代码语义灵活判断。
 | 工具 | 用途 |
 |------|------|
 | `Bash` | find 枚举文件、grep 搜索代码/调用关系、ls 检查文件、mkdir 创建目录 |
-| `Read` | 读取源码、api.json、summary.md、arch.md、各阶段 JSON 状态文件 |
+| `Read` | 读取源码、api.json、finder_summary.md、arch.md、各阶段 JSON 状态文件 |
 | `Write` | 写入 progress.json、analysis_state.json、api-clean.json、summary.md |
 | `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
 | `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
@@ -481,7 +481,7 @@ LLM 可根据代码语义灵活判断。
 |------|------|
 | "接口太多了，我加快一点" | 分析质量优先于效率。每个接口的源码一行不能少。 |
 | "这个接口看起来就是外部接口，不用深入查了" | 必须深入阅读验证，不能凭感觉判断。 |
-| "api-finder 的 summary.md 说这是外部接口，直接保留吧" | cleaner 需要独立分析，summary.md 仅作参考。 |
+| "api-finder 的 finder_summary.md 说这是外部接口，直接保留吧" | cleaner 需要独立分析，finder_summary.md 仅作参考。 |
 | "这个函数可能也是测试函数，但不太确定，先保留吧" | 不确定时倾向排除。误报优先原则。 |
 | "内部调用者判断可能不太准确，先保留吧" | 引用点必须逐一排查，确认无内部调用者才能保留。 |
 | "这个状态文件检查结果不太确定，先继续吧" | 文件存在性检查必须严格遵循双方法+判断规则。 |
