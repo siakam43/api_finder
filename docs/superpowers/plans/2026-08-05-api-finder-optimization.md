@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 修复 api-finder SKILL.md 中 file 字段语义不明确的问题，并新增分析范围校验子步骤过滤无效结果
+**Goal:** 修复 api-finder SKILL.md 中 file 字段语义不明确的问题，新增分析范围校验子步骤过滤无效结果，并将输出文件 summary.md 重命名为 finder_summary.md
 
-**Architecture:** 对 `api-finder/SKILL.md` 做三处独立编辑：第五步、第六步各补充一句 file 字段说明，第七步在审查循环和输出之间插入新的"分析范围校验"子步骤
+**Architecture:** 对 `api-finder/SKILL.md` 做五处编辑：第五步、第六步各补充一句 file 字段说明，第七步新增 validated 字段和分析范围校验子步骤，全局重命名 summary.md 为 finder_summary.md
 
 **Tech Stack:** Markdown
 
@@ -162,6 +162,32 @@ grep -n "### 输出结果\|### 分析范围校验\|### 分析完成" api-finder/
 ```bash
 git add api-finder/SKILL.md
 git commit -m "feat(api-finder): add scope validation sub-step in filter phase
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 5: 输出文件重命名 — summary.md → finder_summary.md
+
+**Files:**
+- Modify: `api-finder/SKILL.md` (全局替换)
+
+- [ ] **Step 1: 全局替换文件名**
+
+将文件中所有 6 处 `summary.md` 替换为 `finder_summary.md`：
+
+```bash
+# 所在行：28, 755, 779, 791, 848, 853
+```
+
+使用 replace_all 一次性替换全部 occurrence。
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add api-finder/SKILL.md
+git commit -m "refactor(api-finder): rename summary.md to finder_summary.md
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```

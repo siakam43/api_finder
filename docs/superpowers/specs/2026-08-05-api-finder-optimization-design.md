@@ -22,19 +22,29 @@
 
 在 found_apis 记录格式说明处增加：`file` 必须填写函数定义所在的文件绝对路径。
 
-### 改动三：第七步 filter — 新增"分析范围校验"子步骤
+### 改动三：filter_state.json 结构 — 新增 validated 字段
+
+**位置：** 第七步"进入检查"中 filter_state.json 结构定义处
+
+在 api_list 条目中新增 `validated` 布尔字段（默认 false），用于标记是否已完成分析范围校验，支持该子步骤的断点恢复。
+
+### 改动四：第七步 filter — 新增"分析范围校验"子步骤
 
 **位置：** 逐条审查循环完成后、"输出结果"之前
 
-对所有 `decision = "keep"` 的条目执行两层校验：
+对所有 `decision = "keep"` 且 `validated = false` 的条目执行两层校验：
 
 1. **函数定义验证：** grep 搜索确认 file 指向的文件中包含该函数定义。不包含则在全部 scope_files 中搜索，找到则更新 file，找不到则排除该接口。
 2. **分析范围验证：** 确认 file 在 scope_files 列表中，不在则排除。
 
-每校验一条保存一次 filter_state.json，支持断点恢复。
+每校验一条保存一次 filter_state.json，"输出结果"只提取 `decision = "keep"` 且 `validated = true` 的条目。
+
+### 改动五：输出文件重命名
+
+`summary.md` 重命名为 `finder_summary.md`，全文件共 6 处引用统一更新。
 
 ## 影响范围
 
 - 仅修改 `api-finder/SKILL.md`
-- 不改动数据结构、状态文件格式、progress.json 结构
+- filter_state.json 的 api_list 条目新增 `validated` 字段
 - 不影响已有分析流程的阶段顺序和断点恢复机制
