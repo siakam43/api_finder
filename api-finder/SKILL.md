@@ -25,7 +25,7 @@ description: Use when the user invokes /api-finder or asks to identify external 
 
 分析完成后在 `<project_dir>/.ethunter_out/api-finder/` 下生成：
 - `api.json` — 识别出的外部接口列表
-- `summary.md` — 逐条识别理由说明
+- `finder_summary.md` — 逐条识别理由说明
 - `arch.md` — 项目架构分析（中间产物）
 - `progress.json` — 断点续分析状态
 - `tmp/` — 各阶段中间结果和状态文件
@@ -752,7 +752,7 @@ b. 确认读取的数据来源：
 ```
 格式与 old_api.json/black_api.json 一致。
 
-2. **summary.md** — `<project_dir>/.ethunter_out/api-finder/summary.md`：
+2. **finder_summary.md** — `<project_dir>/.ethunter_out/api-finder/finder_summary.md`：
 
 按 api.json 的顺序，逐条说明，每条包含以下信息：
 
@@ -776,7 +776,7 @@ b. 确认读取的数据来源：
 告知用户分析完成，报告关键数字：
 - 分析范围的文件数量
 - 识别出的外部接口数量
-- 输出文件路径：`<project_dir>/.ethunter_out/api-finder/api.json` 和 `summary.md`
+- 输出文件路径：`<project_dir>/.ethunter_out/api-finder/api.json` 和 `finder_summary.md`
 
 ---
 
@@ -788,7 +788,7 @@ b. 确认读取的数据来源：
 |------|------|
 | `Bash` | find 枚举文件、grep 搜索代码、ls 检查文件存在、mkdir 创建输出目录 |
 | `Read` | 读取源代码文件、读取配置/状态 JSON 文件 |
-| `Write` | 写入 arch.md、progress.json、api.json、summary.md 和各阶段中间/状态文件 |
+| `Write` | 写入 arch.md、progress.json、api.json、finder_summary.md 和各阶段中间/状态文件 |
 | `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
 | `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
 
@@ -845,12 +845,12 @@ Agent:
     → 筛选完成: 保留 9 个，排除 3 个（测试函数 1、无外部输入 2）
 
   [阶段6/6] 输出结果...
-    → api.json + summary.md 已生成
+    → api.json + finder_summary.md 已生成
 
   分析完成。
   范围: 127 个文件 | 外部接口: 9 个
   输出: /srv/workspace/work_code/src/.ethunter_out/api-finder/api.json
-        /srv/workspace/work_code/src/.ethunter_out/api-finder/summary.md
+        /srv/workspace/work_code/src/.ethunter_out/api-finder/finder_summary.md
 ```
 
 ### 断点续分析
