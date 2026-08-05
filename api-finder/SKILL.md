@@ -430,6 +430,8 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
    {"name": "<函数名>", "file": "<文件绝对路径>", "matched_pattern_id": <pattern.id>}
    ```
 
+   **重要：** `file` 字段必须填写**函数定义**所在的文件绝对路径。通过注册数组/结构体定义或注册函数调用点找到候选函数后，必须以函数名为关键词在 scope_files 中搜索函数定义位置（优先 codegraph_explore，否则 grep 搜索函数体定义 `函数名(` 后跟 `{` 的模式），将定义所在文件路径填入 `file`，而非注册点/注册数组所在文件路径。
+
 4. 继续处理下一个 pending pattern，直到全部 patterns 的 status 都是 `"analyzed"`。如果 patterns 为空数组，直接完成本阶段。
 
 ### 输出
