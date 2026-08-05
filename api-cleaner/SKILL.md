@@ -24,8 +24,8 @@ description: Use when the user invokes /api-cleaner or asks to remove false posi
 ## 输出
 
 分析完成后在 `<project_dir>/.ethunter_out/api-cleaner/` 下生成：
-- `api-clean.json` — 去误报后的外部接口列表
-- `summary.md` — 逐接口保留/排除理由说明
+- `api_clean.json` — 去误报后的外部接口列表
+- `cleaner_summary.md` — 逐接口保留/排除理由说明
 - `progress.json` — 断点续分析状态
 - `tmp/analysis_state.json` — 逐接口分析中间状态
 
@@ -382,9 +382,9 @@ LLM 可根据代码语义灵活判断。
 
 全部接口分析完成后（`api_list` 中所有条目 status = `"completed"`），生成两个输出文件。
 
-### 4.1 api-clean.json
+### 4.1 api_clean.json
 
-从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api-clean.json`：
+从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api_clean.json`：
 
 ```json
 [
@@ -395,9 +395,9 @@ LLM 可根据代码语义灵活判断。
 
 格式与 api-finder 的 `api.json` 一致，仅包含 name 和 file 两个字段。
 
-### 4.2 summary.md
+### 4.2 cleaner_summary.md
 
-写入 `<project_dir>/.ethunter_out/api-cleaner/summary.md`：
+写入 `<project_dir>/.ethunter_out/api-cleaner/cleaner_summary.md`：
 
 ```markdown
 # 接口去误报分析报告 — <project_dir>
@@ -429,7 +429,7 @@ LLM 可根据代码语义灵活判断。
 
 告知用户分析完成，报告关键数字：
 - 输入接口数、保留数、排除数
-- 输出文件路径：`<project_dir>/.ethunter_out/api-cleaner/api-clean.json` 和 `summary.md`
+- 输出文件路径：`<project_dir>/.ethunter_out/api-cleaner/api_clean.json` 和 `cleaner_summary.md`
 
 ---
 
@@ -465,7 +465,7 @@ LLM 可根据代码语义灵活判断。
 |------|------|
 | `Bash` | find 枚举文件、grep 搜索代码/调用关系、ls 检查文件、mkdir 创建目录 |
 | `Read` | 读取源码、api.json、finder_summary.md、arch.md、各阶段 JSON 状态文件 |
-| `Write` | 写入 progress.json、analysis_state.json、api-clean.json、summary.md |
+| `Write` | 写入 progress.json、analysis_state.json、api_clean.json、cleaner_summary.md |
 | `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
 | `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
 
@@ -497,7 +497,7 @@ LLM 可根据代码语义灵活判断。
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。
-  [输入检查] api.json (15个接口)、summary.md、arch.md 均存在。
+  [输入检查] api.json (15个接口)、cleaner_summary.md、arch.md 均存在。
   [恢复检查] 未发现 progress.json，全新分析开始。
 
   [逐接口分析] 15 个待分析接口...
@@ -511,8 +511,8 @@ Agent:
 
   分析完成。
   输入: 15 个接口 | 保留: 6 | 排除: 9
-  输出: /srv/workspace/work_code/src/.ethunter_out/api-cleaner/api-clean.json
-        /srv/workspace/work_code/src/.ethunter_out/api-cleaner/summary.md
+  输出: /srv/workspace/work_code/src/.ethunter_out/api-cleaner/api_clean.json
+        /srv/workspace/work_code/src/.ethunter_out/api-cleaner/cleaner_summary.md
 ```
 
 ### 断点续分析
@@ -522,7 +522,7 @@ Agent:
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。
-  [输入检查] api.json、summary.md、arch.md 均存在。
+  [输入检查] api.json、cleaner_summary.md、arch.md 均存在。
   [恢复检查] 发现 progress.json，api_analyzed = 7/15，从接口 8 继续。
 
   [逐接口分析] 剩余 8 个接口...
