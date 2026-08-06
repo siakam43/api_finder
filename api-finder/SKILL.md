@@ -130,7 +130,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    ├── 确认不存在 → 全新分析，从"三、了解项目架构"开始
    └── 确认存在 → 读取 progress.json，找到当前 phase 字段的值
 
-2. 如果 phase 指向复杂阶段（feature / arch_identify / filter）：
+2. 如果 phase 指向复杂阶段（inherit / feature / arch_identify / filter）：
    用两种方法检查对应 state_file 指向的文件是否存在：
    ├── 确认存在 → 加载状态文件，从断点处继续该阶段
    └── 确认不存在（明确报错）→ 状态文件丢失，该阶段退回重做
@@ -146,7 +146,10 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 {
   "phase": "arch_analysis|inherit|feature|arch_identify|filter|done",
   "arch_analysis": { "status": "pending|in_progress|completed" },
-  "inherit": { "status": "pending|in_progress|completed" },
+  "inherit": {
+    "status": "pending|in_progress|completed",
+    "state_file": "tmp/inherit_result.json"
+  },
   "feature": {
     "status": "pending|in_progress|completed",
     "state_file": "tmp/feature_state.json"
@@ -237,7 +240,18 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    │     更新 progress.json 中 inherit.status = "completed"，phase = "feature"，继续下一阶段
    └── 确认存在 → 继续
 
-2. 读取 old_api.json。其格式为：
+1.5 用两种方法检查 <project_dir>/.ethunter_out/api-finder/tmp/inherit_result.json 是否存在。
+   根据判断规则：
+   ├── 确认存在 → 加载 inherit_result.json 作为 inherit_results。
+   │     遍历 old_api.json 每个条目，将 name 和 file 原始值与 inherit_results 中
+   │     的 name 和 original_file 对比：
+   │     - 已在 inherit_results 中 → 保留已处理结果，跳过
+   │     - 不在 inherit_results 中 → 作为待处理条目
+   │     待处理条目为空 → 全部已处理，跳到步骤 4
+   │     待处理条目非空 → 继续步骤 2，只处理待处理条目
+   └── 确认不存在 → 全新启动，inherit_results = []
+
+2. 读取 old_api.json（如从断点恢复，仅读取待处理条目）。其格式为：
    [
      {"name": "FUNC_NAME", "file": "FILE_PATH"},
      ...
