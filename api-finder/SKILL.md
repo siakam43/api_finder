@@ -247,7 +247,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    │     的 name 和 original_file 对比：
    │     - 已在 inherit_results 中 → 保留已处理结果，跳过
    │     - 不在 inherit_results 中 → 作为待处理条目
-   │     待处理条目为空 → 全部已处理，跳到步骤 4
+   │     待处理条目为空 → 全部已处理，跳到步骤 3（重新生成输出文件）
    │     待处理条目非空 → 继续步骤 2，只处理待处理条目
    └── 确认不存在 → 全新启动，inherit_results = []
 
@@ -258,9 +258,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    ]
    其中 `file` 可能是绝对路径，也可能是相对于 `<project_dir>` 的相对路径。
 
-   初始化处理记录列表 `inherit_results = []`。
-
-   逐一检查每个条目：
+   逐一检查每个条目（如从断点恢复，仅检查待处理条目）：
 
    Step 2a — 路径规范化：将 `file` 规范化为绝对路径。
    - 以 `/` 开头 → 绝对路径，直接使用
