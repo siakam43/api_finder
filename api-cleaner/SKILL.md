@@ -288,7 +288,7 @@ LLM 可根据代码语义灵活判断。
 
 记录外部输入参数列表。如果列表为空 → **排除**（无外部输入）。
 
-将识别出的外部输入参数名记录到 `taint_data` 字段。例如：`"data, len"`（两个参数都是外部输入）、`"buf"`（仅 buf 是外部输入）。
+将识别出的外部输入参数名记录到 `taint_data` 字段，多个参数名用 `/` 分割。例如：`"data/len"`（两个参数都是外部输入）、`"buf"`（仅 buf 是外部输入）。
 
 **重要：** 大多数情况下，外部数据以指针形式传递。判断时要仔细分析每个参数的实际用途，不要看到有参数就认为有外部输入。
 
@@ -404,12 +404,12 @@ LLM 可根据代码语义灵活判断。
 
 ```json
 [
-  {"name": "func_a", "file": "/abs/path/to/a.c"},
-  {"name": "func_c", "file": "/abs/path/to/c.c"}
+  {"name": "func_a", "file": "/abs/path/to/a.c", "form": "parameter_input", "taint_data": "data/len"},
+  {"name": "func_c", "file": "/abs/path/to/c.c", "form": "channel_read", "taint_data": "共享内存 shm_ptr"}
 ]
 ```
 
-格式与 api-finder 的 `api.json` 一致，仅包含 name 和 file 两个字段。
+各字段直接取自 `analysis_state.json` 中对应条目的 `form` 和 `taint_data` 字段。
 
 ### 4.2 cleaner_summary.md
 
