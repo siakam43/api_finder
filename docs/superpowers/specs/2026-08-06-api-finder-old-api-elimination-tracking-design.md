@@ -17,7 +17,7 @@
 
 ### `tmp/old_api_fate.json`
 
-追踪 old_api.json 每一个条目的完整去向。第四节创建，第七节按需更新。如果 old_api.json 不存在，第四节跳过，不创建本文件。输出阶段检查本文件是否存在，不存在则跳过附节。
+追踪 old_api.json 每一个条目的完整去向。第四节创建，第七节按需更新。
 
 ```json
 [
@@ -108,11 +108,10 @@ for each entry in api_list:
         将 entry 的 fate 从 "inherited" 改为 "eliminated"
         将 stage 设为 "filter"
         将 reason 改为 entry.reason
-        将 file 更新为 entry.file（校验阶段可能已更新文件路径）
         保存 old_api_fate.json
 ```
 
-匹配用 `name` 而非 `name + file`，因为第七节"分析范围校验"可能更新 `file` 字段（函数在另一文件中找到定义），此时用原 `file` 匹配会失败。old_api.json 中函数名本身唯一，`name` 匹配已足够。同时回写时同步更新 `file`，确保淘汰记录中的文件路径反映最新实际位置。
+匹配用 `name` 而非 `name + file`，因为第七节"分析范围校验"可能更新 `file` 字段（函数在另一文件中找到定义），此时用原 `file` 匹配会失败。old_api.json 中函数名本身唯一，`name` 匹配已足够。
 
 注意：`decision = "keep"` 的继承接口在"分析范围校验"阶段可能被改为 `"exclude"`，因此回写必须在校验阶段完成后执行。
 
