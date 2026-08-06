@@ -242,20 +242,27 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
      {"name": "FUNC_NAME", "file": "FILE_PATH"},
      ...
    ]
-   逐一检查每个条目，分两步验证：
+   其中 `file` 可能是绝对路径，也可能是相对于 `<project_dir>` 的相对路径。
 
-   Step 2a — 文件路径检查：该接口的 file 字段是否在 scope_files 中存在？
+   逐一检查每个条目：
+
+   Step 2a — 路径规范化：将 `file` 规范化为绝对路径。
+   - 以 `/` 开头 → 绝对路径，直接使用
+   - 不以 `/` 开头 → 相对路径，拼接为 `<project_dir>/<相对路径>`
+   后续步骤均使用规范化后的绝对路径。
+
+   Step 2b — 文件路径检查：该接口规范化后的路径是否在 scope_files 中存在？
    ├── 不在 scope_files 中 → 排除（文件可能已被删除或不在本次分析范围）
-   └── 在 scope_files 中 → 继续 Step 2b
+   └── 在 scope_files 中 → 继续 Step 2c
 
-   Step 2b — 函数存在性检查：在该文件中搜索函数定义是否依然存在。
-      使用 `grep -n "<函数名>" <文件路径>` 搜索，确认文件中存在该函数的定义
+   Step 2c — 函数存在性检查：在该文件中搜索函数定义是否依然存在。
+      使用 `grep -n "<函数名>" <规范化后的文件路径>` 搜索，确认文件中存在该函数的定义
       （不仅匹配声明/引用，需要确认有函数体定义。例如匹配 `函数名(` 后跟 `{` 的模式）。
       ├── 函数定义不存在 → 排除（函数可能已被删除、重命名或移到了其他文件）
       └── 函数定义存在 → 计入继承接口列表
 
 3. 将继承接口列表写入 <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json，
-   格式与 old_api.json 一致。
+   格式与 old_api.json 一致（`file` 字段使用规范化后的绝对路径）。
 
 4. 更新 progress.json：inherit.status = "completed"，phase = "feature"。
 ```
