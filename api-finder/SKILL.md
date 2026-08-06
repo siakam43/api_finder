@@ -639,13 +639,16 @@ b. 确认读取的数据来源：
 ### 合并接口列表
 
 ```
-1. 读取以下文件（如果某文件为空数组或不存在，跳过该文件）：
-   - tmp/inherited_apis.json
-   - tmp/feature_apis.json
-   - tmp/arch_apis.json
+1. 读取以下文件（如果某文件为空数组或不存在，跳过该文件），标记每个条目的来源：
+   - tmp/inherited_apis.json → origin = "inherit"
+   - tmp/feature_apis.json → origin = "feature"
+   - tmp/arch_apis.json → origin = "arch_identify"
 
 2. 合并所有条目，按 name + file 去重（两个条目函数名和文件路径都一致视为重复，保留一个即可）。
-   去重后的列表称为 api_pool。
+   去重时，如果多个来源包含同一接口，优先保留 origin = "inherit"（历史接口优先），
+   其余 origin 值丢弃即可。
+   去重后的列表称为 api_pool。每个条目为：
+   {"name": "<函数名>", "file": "<文件路径>", "origin": "inherit|feature|arch_identify"}
 ```
 
 ### 黑名单筛选
@@ -673,13 +676,13 @@ b. 确认读取的数据来源：
 {
   "api_total": <api_pool条目数>,
   "api_list": [
-    {"name": "<函数名>", "file": "<文件路径>", "reviewed": false, "decision": null, "reason": null, "validated": false},
+    {"name": "<函数名>", "file": "<文件路径>", "origin": "inherit|feature|arch_identify", "reviewed": false, "decision": null, "reason": null, "validated": false},
     ...
   ]
 }
 ```
 
-全新启动时，将 api_pool 中全部条目写入 api_list，清空 decision/reason，validated 设为 false。
+全新启动时，将 api_pool 中全部条目写入 api_list（保留 origin 字段），清空 decision/reason，validated 设为 false。
 
 更新 progress.json：`filter.status = "in_progress"`，`phase = "filter"`。
 
