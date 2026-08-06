@@ -275,8 +275,9 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    │     result = "eliminated", path_updated = false,
    │     reason = "Step 2c：文件不在 scope_files 中，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
    │     处理下一条。
-   └── 无同名继承 → 在全部 scope_files 中搜索该函数定义。
-       使用 `grep -rn "<函数名>" <project_dir>` 在 scope_files 中搜索，
+   └── 无同名继承 → 在 scope_files 中搜索该函数定义。
+       首先使用 `grep -rn "<函数名>" <project_dir>` 搜索所有匹配该函数名的位置，
+       然后过滤结果，只保留文件路径在 scope_files 中的匹配行。
        匹配函数体定义（`函数名(` 后跟 `{` 的模式）。
        ├── 找到一个或多个 → 取第一个匹配的文件。记录：
        │     path_updated = true, file = 新找到的绝对路径,
