@@ -244,25 +244,58 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    ]
    其中 `file` 可能是绝对路径，也可能是相对于 `<project_dir>` 的相对路径。
 
+   初始化处理记录列表 `inherit_results = []`。
+
    逐一检查每个条目：
 
    Step 2a — 路径规范化：将 `file` 规范化为绝对路径。
    - 以 `/` 开头 → 绝对路径，直接使用
    - 不以 `/` 开头 → 相对路径，拼接为 `<project_dir>/<相对路径>`
-   后续步骤均使用规范化后的绝对路径。
+   后续步骤均使用规范化后的绝对路径。记录 `original_file` = old_api.json 中的原始值。
 
    Step 2b — 文件路径检查：该接口规范化后的路径是否在 scope_files 中存在？
-   ├── 不在 scope_files 中 → 排除（文件可能已被删除或不在本次分析范围）
-   └── 在 scope_files 中 → 继续 Step 2c
+   ├── 在 scope_files 中 → 继续 Step 2d
+   └── 不在 scope_files 中 → 进入 Step 2c（fallback 搜索）
 
-   Step 2c — 函数存在性检查：在该文件中搜索函数定义是否依然存在。
-      使用 `grep -n "<函数名>" <规范化后的文件路径>` 搜索，确认文件中存在该函数的定义
+   Step 2c — fallback 搜索：
+   检查 inherit_results 中是否已有 **同名** 且 result = "inherited" 的条目？
+   ├── 已有同名继承 → 淘汰。记录：
+   │     result = "eliminated", path_updated = false,
+   │     reason = "Step 2c：文件不在 scope_files 中，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
+   │     处理下一条。
+   └── 无同名继承 → 在全部 scope_files 中搜索该函数定义。
+       使用 `grep -rn "<函数名>" <project_dir>` 在 scope_files 中搜索，
+       匹配函数体定义（`函数名(` 后跟 `{` 的模式）。
+       ├── 找到一个或多个 → 取第一个匹配的文件。记录：
+       │     path_updated = true, file = 新找到的绝对路径,
+       │     reason = "原文件不在 scope_files 中，在 scope_files 中找到同名函数定义于 <新路径>"
+       │     将 file 更新为新路径，继续 Step 2d。
+       └── 未找到 → 淘汰。记录：
+             result = "eliminated", path_updated = false,
+             reason = "Step 2c：文件不在 scope_files 中，且 scope_files 中未找到同名函数定义"
+
+   Step 2d — 函数存在性检查：在 Step 2b/2c 确定的 `file` 中搜索函数定义。
+      使用 `grep -n "<函数名>" <file>` 搜索，确认文件中存在该函数的定义
       （不仅匹配声明/引用，需要确认有函数体定义。例如匹配 `函数名(` 后跟 `{` 的模式）。
-      ├── 函数定义不存在 → 排除（函数可能已被删除、重命名或移到了其他文件）
-      └── 函数定义存在 → 计入继承接口列表
+      ├── 函数定义不存在 → 淘汰。记录：
+      │     result = "eliminated", path_updated = (保持 Step 2c 的值),
+      │     reason = "Step 2d：在文件 <file> 中未找到函数 <name> 的定义（可能已删除或重命名）"
+      └── 函数定义存在 → 继承。记录：
+            result = "inherited", path_updated = (保持 Step 2c 的值),
+            reason = (保持 Step 2c 的值，若来自 2b 直接通过则为 null)
 
-3. 将继承接口列表写入 <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json，
-   格式与 old_api.json 一致（`file` 字段使用规范化后的绝对路径）。
+   将本条处理记录追加到 inherit_results。
+
+3. 写入两份文件：
+   - 将 inherit_results 全部条目写入
+     <project_dir>/.ethunter_out/api-finder/tmp/inherit_result.json。
+     每条格式：
+     {"name": "<函数名>", "original_file": "<old_api原始值>", "file": "<最终绝对路径>",
+      "result": "inherited|eliminated", "path_updated": true|false,
+      "reason": null|"<处理原因>"}
+   - 将 result = "inherited" 的条目（仅 name + file 字段）写入
+     <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json，
+     `file` 使用最终路径。
 
 4. 更新 progress.json：inherit.status = "completed"，phase = "feature"。
 ```
