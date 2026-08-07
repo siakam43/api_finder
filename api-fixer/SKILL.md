@@ -172,7 +172,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
    ├── 已在 results 中 → 保留已处理结果，跳过
    └── 不在 results 中 → 作为待处理条目
 
-4. 待处理条目为空 → 全部已处理，跳到"输出结果"步骤
+4. 待处理条目为空 → 全部已处理，跳到 Step 3（输出结果）
    待处理条目非空 → 继续第三节
 ```
 
@@ -198,53 +198,53 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 ### 流程
 
 ```
-1. 读取 old_api.json。其格式为：
-   [
-     {"name": "FUNC_NAME", "file": "FILE_PATH"},
-     ...
-   ]
-   其中 file 可能是绝对路径，也可能是相对于 project_dir 的相对路径。
+Step 1 — 读取 old_api.json。其格式为：
+  [
+    {"name": "FUNC_NAME", "file": "FILE_PATH"},
+    ...
+  ]
+  其中 file 可能是绝对路径，也可能是相对于 project_dir 的相对路径。
 
-   逐一检查每个待处理条目（如从断点恢复，仅检查待处理条目）：
+Step 2 — 逐条目处理。对每个待处理条目（如从断点恢复，仅处理未在 progress.results 中的条目），依次执行以下子步骤 a→b→c→d：
 
-   Step 2a — 路径规范化：将 file 规范化为绝对路径。
-   - 以 / 开头 → 绝对路径，直接使用
-   - 不以 / 开头 → 相对路径，拼接为 <project_dir>/<相对路径>
-   后续步骤均使用规范化后的绝对路径。记录 original_file = old_api.json 中的原始值。
+  a. 路径规范化：将 file 规范化为绝对路径。
+     - 以 / 开头 → 绝对路径，直接使用
+     - 不以 / 开头 → 相对路径，拼接为 <project_dir>/<相对路径>
+     后续步骤均使用规范化后的绝对路径。记录 original_file = old_api.json 中的原始值。
 
-   Step 2b — 路径范围检查：该接口规范化后的路径是否在 scope_files 中存在？
-   ├── 在 scope_files 中 → 继续 Step 2c（函数存在性检查）
-   └── 不在 scope_files 中 → 直接进入 Step 2d（fallback 搜索）
+  b. 路径范围检查：该接口规范化后的路径是否在 scope_files 中存在？
+     ├── 在 scope_files 中 → 继续 c（函数存在性检查）
+     └── 不在 scope_files 中 → 直接进入 d（fallback 搜索）
 
-   Step 2c — 函数存在性检查：在 Step 2b 确定的 file 中，使用"搜索函数定义的方法"确认该函数定义存在。
-   ├── 函数定义存在 → 继承。记录：
-   │     result = "inherited", path_updated = false,
-   │     reason = null
-   └── 函数定义不存在 → 进入 Step 2d（fallback 搜索）
+  c. 函数存在性检查：在 b 确定的 file 中，使用"搜索函数定义的方法"确认该函数定义存在。
+     ├── 函数定义存在 → 继承。记录：
+     │     result = "inherited", path_updated = false,
+     │     reason = null
+     └── 函数定义不存在 → 进入 d（fallback 搜索）
 
-   Step 2d — fallback 搜索：
-   检查 progress.results 中是否已有同名且 result = "inherited" 的条目？
-   ├── 已有同名继承 → 淘汰。记录：
-   │     result = "eliminated", path_updated = false,
-   │     reason = "Step 2d：函数定义未在原路径对应的文件中找到，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
-   │     处理下一条。
-   └── 无同名继承 → 在 scope_files 中搜索该函数定义。
-         使用"搜索函数定义的方法"在 <project_dir> 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
-         ├── 找到一个或多个 → 取第一个匹配的文件。记录：
-         │     path_updated = true, file = 新找到的绝对路径,
-         │     reason = "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 <新路径>"
-         │     result = "inherited"
-         └── 未找到 → 淘汰。记录：
-               result = "eliminated", path_updated = false,
-               reason = "Step 2d：函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"
+  d. fallback 搜索：
+     检查 progress.results 中是否已有同名且 result = "inherited" 的条目？
+     ├── 已有同名继承 → 淘汰。记录：
+     │     result = "eliminated", path_updated = false,
+     │     reason = "d：函数定义未在原路径对应的文件中找到，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
+     │     处理下一条。
+     └── 无同名继承 → 在 scope_files 中搜索该函数定义。
+           使用"搜索函数定义的方法"在 <project_dir> 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
+           ├── 找到一个或多个 → 取第一个匹配的文件。记录：
+           │     path_updated = true, file = 新找到的绝对路径,
+           │     reason = "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 <新路径>"
+           │     result = "inherited"
+           └── 未找到 → 淘汰。记录：
+                 result = "eliminated", path_updated = false,
+                 reason = "d：函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"
 
-   将本条处理记录追加到 progress.results，更新 progress.processed += 1。
-   **每处理完一条立即保存 progress.json**，防止中断丢失进度。
+  将本条处理记录追加到 progress.results，更新 progress.processed += 1。
+  **每处理完一条立即保存 progress.json**，防止中断丢失进度。
 
-3. 输出结果：
-   - 将 progress.results 中 result = "inherited" 的条目（仅 name + file 字段，file 使用最终路径）写入
-     <project_dir>/.ethunter_out/api-fixer/inherited_apis.json
-   - 更新 progress.json：phase = "done"
+Step 3 — 输出结果：
+  - 将 progress.results 中 result = "inherited" 的条目（仅 name + file 字段，file 使用最终路径）写入
+    <project_dir>/.ethunter_out/api-fixer/inherited_apis.json
+  - 更新 progress.json：phase = "done"
 ```
 
 本阶段仅做文件路径比对和函数名搜索，不涉及深度代码阅读。
@@ -259,7 +259,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 
 3. **严格遵循去重规则。** progress.results 中 name + original_file 唯一的条目仅处理一次。
 
-4. **按设计流程的指定顺序执行。** 严格按照 2a → 2b → 2c → 2d 顺序，不跳过不合并。
+4. **按设计流程的指定顺序执行。** 严格按照 a → b → c → d 顺序，不跳过不合并。
 
 5. **文件绝对路径。** inherited_apis.json 和 progress.json 中的 file 字段一律使用绝对路径。
 
@@ -294,7 +294,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 | 想法 | 现实 |
 |------|------|
 | "条目太多了，我加快一点" | 分析质量优先于效率。每个条目必须认真验证。 |
-| "这个函数名很常见，跳过 fallback 吧" | 必须完整执行 2b→2c→2d 流程。 |
+| "这个函数名很常见，跳过 fallback 吧" | 必须完整执行 b→c→d 流程。 |
 | "这个函数可能已经删了，但不太确定，先保留吧" | 不确定时倾向淘汰。误报优先原则。 |
 | "两步法太麻烦，我先看名字匹配就直接判定吧" | 必须通过 grep + Read 确认函数体定义存在，不能只看名称匹配。 |
 | "这个状态文件检查结果不太确定，先继续吧" | 文件存在性检查必须严格遵循双方法+判断规则。 |
