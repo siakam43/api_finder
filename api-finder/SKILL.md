@@ -280,7 +280,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
    Step 2b — 路径范围检查：该接口规范化后的路径是否在 scope_files 中存在？
    ├── 在 scope_files 中 → 继续 Step 2c（函数存在性检查）
-   └── 不在 scope_files 中 → 直接进入 Step 2d（fallback 搜索），无需先做函数存在性检查
+   └── 不在 scope_files 中 → 直接进入 Step 2d（fallback 搜索）
 
    Step 2c — 函数存在性检查：在 Step 2b 确定的 `file` 中，使用"搜索函数定义的方法"确认该函数定义存在。
       ├── 函数定义存在 → 继承。记录：
