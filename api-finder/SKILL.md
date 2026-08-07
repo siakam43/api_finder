@@ -278,33 +278,32 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    - 不以 `/` 开头 → 相对路径，拼接为 `<project_dir>/<相对路径>`
    后续步骤均使用规范化后的绝对路径。记录 `original_file` = old_api.json 中的原始值。
 
-   Step 2b — 文件路径检查：该接口规范化后的路径是否在 scope_files 中存在？
-   ├── 在 scope_files 中 → 继续 Step 2d
-   └── 不在 scope_files 中 → 进入 Step 2c（fallback 搜索）
+   Step 2b — 路径范围检查：该接口规范化后的路径是否在 scope_files 中存在？
+   ├── 在 scope_files 中 → 继续 Step 2c（函数存在性检查）
+   └── 不在 scope_files 中 → 直接进入 Step 2d（fallback 搜索），无需先做函数存在性检查
 
-   Step 2c — fallback 搜索：
+   Step 2c — 函数存在性检查：在 Step 2b 确定的 `file` 中，使用"搜索函数定义的方法"确认该函数定义存在。
+      ├── 函数定义存在 → 继承。记录：
+      │     result = "inherited", path_updated = false,
+      │     reason = null
+      └── 函数定义不存在 → 进入 Step 2d（fallback 搜索）
+
+   Step 2d — fallback 搜索：
    检查 inherit_results 中是否已有 **同名** 且 result = "inherited" 的条目？
    ├── 已有同名继承 → 淘汰。记录：
    │     result = "eliminated", path_updated = false,
-   │     reason = "Step 2c：文件不在 scope_files 中，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
+   │     reason = "Step 2d：函数定义未在原路径对应的文件中找到，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
    │     处理下一条。
    └── 无同名继承 → 在 scope_files 中搜索该函数定义。
-       使用"搜索函数定义的方法"在 `<project_dir>` 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
-       ├── 找到一个或多个 → 取第一个匹配的文件。记录：
-       │     path_updated = true, file = 新找到的绝对路径,
-       │     reason = "原文件不在 scope_files 中，在 scope_files 中找到同名函数定义于 <新路径>"
-       │     将 file 更新为新路径，继续 Step 2d。
-       └── 未找到 → 淘汰。记录：
-             result = "eliminated", path_updated = false,
-             reason = "Step 2c：文件不在 scope_files 中，且 scope_files 中未找到同名函数定义"
+        使用"搜索函数定义的方法"在 `<project_dir>` 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
+        ├── 找到一个或多个 → 取第一个匹配的文件。记录：
+        │     path_updated = true, file = 新找到的绝对路径,
+        │     reason = "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 <新路径>"
+        │     result = "inherited"
+        └── 未找到 → 淘汰。记录：
+              result = "eliminated", path_updated = false,
+              reason = "Step 2d：函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"
 
-   Step 2d — 函数存在性检查：在 Step 2b/2c 确定的 `file` 中，使用"搜索函数定义的方法"确认该函数定义存在。
-      ├── 函数定义不存在 → 淘汰。记录：
-      │     result = "eliminated", path_updated = (保持 Step 2c 的值),
-      │     reason = "Step 2d：在文件 <file> 中未找到函数 <name> 的定义（可能已删除或重命名）"
-      └── 函数定义存在 → 继承。记录：
-            result = "inherited", path_updated = (保持 Step 2c 的值),
-            reason = (保持 Step 2c 的值，若来自 2b 直接通过则为 null)
 
    将本条处理记录追加到 inherit_results。
 
