@@ -130,7 +130,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    ├── 确认不存在 → 全新分析，从"三、了解项目架构"开始
    └── 确认存在 → 读取 progress.json，找到当前 phase 字段的值
 
-2. 如果 phase 指向复杂阶段（inherit / feature / arch_identify / filter）：
+2. 如果 phase 指向复杂阶段（feature / arch_identify / filter）：
    用两种方法检查对应 state_file 指向的文件是否存在：
    ├── 确认存在 → 加载状态文件，从断点处继续该阶段
    └── 确认不存在（明确报错）→ 状态文件丢失，该阶段退回重做
@@ -144,12 +144,8 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 ```json
 {
-  "phase": "arch_analysis|inherit|feature|arch_identify|filter|done",
+  "phase": "arch_analysis|feature|arch_identify|filter|done",
   "arch_analysis": { "status": "pending|in_progress|completed" },
-  "inherit": {
-    "status": "pending|in_progress|completed",
-    "state_file": "tmp/inherit_result.json"
-  },
   "feature": {
     "status": "pending|in_progress|completed",
     "state_file": "tmp/feature_state.json"
@@ -179,7 +175,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 1. 用两种方法检查 <project_dir>/.ethunter_out/api-finder/arch.md 是否存在。
    根据判断规则：
    ├── 确认存在 → 跳过本阶段，更新 progress.json 中 arch_analysis.status = "completed"，
-   │     phase = "inherit"，继续下一阶段
+   │     phase = "feature"，继续下一阶段
    └── 确认不存在 → 执行架构分析
 ```
 
@@ -223,105 +219,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 - <文件绝对路径> — <说明>
 ```
 
-5. 更新 progress.json：`arch_analysis.status = "completed"`，`phase = "inherit"`。
-
----
-
-## 四、接口继承（inherit）
-
-将历史版本中已识别的外部接口与当前分析范围做交叉比对。
-
-### 搜索函数定义的方法
-
-当需要确认某个函数名在指定目标中是否存在**函数体定义**（而非声明或引用）时，使用以下两步法：
-
-1. **grep 定位：** `grep -rn "<函数名>" <目标路径>` — 获取所有匹配该函数名的行及行号。`<目标路径>` 为文件时搜索该文件，为目录时递归搜索。
-
-2. **Read 验证：** 对每个候选匹配，Read 读取匹配行前后各 3 行（上下文共约 7 行），在窗口中判断是否满足以下**全部条件**：
-   - 包含完整的函数签名（返回类型 + 函数名 + 参数列表）
-   - 签名之后出现 `{`（允许 `{` 在签名行的后续行出现，如 Allman 风格将 `{` 放在下一行）
-   - 不以 `;` 结尾（排除函数声明）
-   - 不在注释中
-   全部满足 → 确认存在函数体定义。任一不满足 → 不是定义，继续检查下一个候选。所有候选都不满足 → 未找到。
-
-### 流程
-
-```
-1. 用两种方法检查 <project_dir>/.ethunter_out/api-finder/conf/old_api.json 是否存在。
-   根据判断规则：
-   ├── 确认不存在 → 写入空的 inherited_apis.json（内容为 []），
-   │     更新 progress.json 中 inherit.status = "completed"，phase = "feature"，继续下一阶段
-   └── 确认存在 → 继续
-
-1.5 用两种方法检查 <project_dir>/.ethunter_out/api-finder/tmp/inherit_result.json 是否存在。
-   根据判断规则：
-   ├── 确认存在 → 加载 inherit_result.json 作为 inherit_results。
-   │     遍历 old_api.json 每个条目，将 name 和 file 原始值与 inherit_results 中
-   │     的 name 和 original_file 对比：
-   │     - 已在 inherit_results 中 → 保留已处理结果，跳过
-   │     - 不在 inherit_results 中 → 作为待处理条目
-   │     待处理条目为空 → 全部已处理，跳到步骤 3（重新生成输出文件）
-   │     待处理条目非空 → 继续步骤 2，只处理待处理条目
-   └── 确认不存在 → 全新启动，inherit_results = []
-
-2. 读取 old_api.json（如从断点恢复，仅读取待处理条目）。其格式为：
-   [
-     {"name": "FUNC_NAME", "file": "FILE_PATH"},
-     ...
-   ]
-   其中 `file` 可能是绝对路径，也可能是相对于 `<project_dir>` 的相对路径。
-
-   逐一检查每个条目（如从断点恢复，仅检查待处理条目）：
-
-   Step 2a — 路径规范化：将 `file` 规范化为绝对路径。
-   - 以 `/` 开头 → 绝对路径，直接使用
-   - 不以 `/` 开头 → 相对路径，拼接为 `<project_dir>/<相对路径>`
-   后续步骤均使用规范化后的绝对路径。记录 `original_file` = old_api.json 中的原始值。
-
-   Step 2b — 路径范围检查：该接口规范化后的路径是否在 scope_files 中存在？
-   ├── 在 scope_files 中 → 继续 Step 2c（函数存在性检查）
-   └── 不在 scope_files 中 → 直接进入 Step 2d（fallback 搜索）
-
-   Step 2c — 函数存在性检查：在 Step 2b 确定的 `file` 中，使用"搜索函数定义的方法"确认该函数定义存在。
-      ├── 函数定义存在 → 继承。记录：
-      │     result = "inherited", path_updated = false,
-      │     reason = null
-      └── 函数定义不存在 → 进入 Step 2d（fallback 搜索）
-
-   Step 2d — fallback 搜索：
-   检查 inherit_results 中是否已有 **同名** 且 result = "inherited" 的条目？
-   ├── 已有同名继承 → 淘汰。记录：
-   │     result = "eliminated", path_updated = false,
-   │     reason = "Step 2d：函数定义未在原路径对应的文件中找到，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
-   │     处理下一条。
-   └── 无同名继承 → 在 scope_files 中搜索该函数定义。
-        使用"搜索函数定义的方法"在 `<project_dir>` 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
-        ├── 找到一个或多个 → 取第一个匹配的文件。记录：
-        │     path_updated = true, file = 新找到的绝对路径,
-        │     reason = "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 <新路径>"
-        │     result = "inherited"
-        └── 未找到 → 淘汰。记录：
-              result = "eliminated", path_updated = false,
-              reason = "Step 2d：函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"
-
-
-   将本条处理记录追加到 inherit_results。
-
-3. 写入两份文件：
-   - 将 inherit_results 全部条目写入
-     <project_dir>/.ethunter_out/api-finder/tmp/inherit_result.json。
-     每条格式：
-     {"name": "<函数名>", "original_file": "<old_api原始值>", "file": "<最终绝对路径>",
-      "result": "inherited|eliminated", "path_updated": true|false,
-      "reason": null|"<处理原因>"}
-   - 将 result = "inherited" 的条目（仅 name + file 字段）写入
-     <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json，
-     `file` 使用最终路径。
-
-4. 更新 progress.json：inherit.status = "completed"，phase = "feature"。
-```
-
-本阶段仅做文件路径比对和函数名搜索，不涉及深度代码阅读。
+5. 更新 progress.json：`arch_analysis.status = "completed"`，`phase = "feature"`。
 
 ---
 
@@ -332,7 +230,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 ### 前置条件检查
 
 ```
-读取 <project_dir>/.ethunter_out/api-finder/tmp/inherited_apis.json
+读取 <project_dir>/.ethunter_out/api-fixer/inherited_apis.json
 ├── 内容为 []（空数组）→ 跳过本阶段。
 │     更新 progress.json：feature.status = "completed"，phase = "arch_identify"
 │     继续下一阶段
@@ -661,7 +559,7 @@ b. 确认读取的数据来源：
 
 ```
 1. 读取以下文件（如果某文件为空数组或不存在，跳过该文件），标记每个条目的来源：
-   - tmp/inherited_apis.json → origin = "inherit"
+   - <project_dir>/.ethunter_out/api-fixer/inherited_apis.json → origin = "inherit"
    - tmp/feature_apis.json → origin = "feature"
    - tmp/arch_apis.json → origin = "arch_identify"
 
@@ -881,38 +779,37 @@ b. 确认读取的数据来源：
 ### 首次分析
 
 ```
+用户: /api-fixer /srv/workspace/work_code/src
+→ api-fixer 完成，输出 inherited_apis.json (12 个接口)
+
 用户: /api-finder /srv/workspace/work_code/src
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。macro.json 已发现（按需查阅）。
   [恢复检查] 未发现 progress.json，全新分析开始。
 
-  [阶段1/6] 了解项目架构...
+  [阶段1/4] 了解项目架构...
     → 分析模块功能与通信边界...
     → arch.md 已生成（识别出 3 个外部通信边界，48 个待分析文件）
 
-  [阶段2/6] 接口继承...
-    → 未发现 old_api.json，跳过继承
+  [阶段2/4] 接口特征提取...
+    → 读取 api-fixer/inherited_apis.json（12 个种子接口）
+    → 子阶段一（收集特征）：从 12 个种子中提取 3 种注册模式
+    → 子阶段二（推广匹配）：发现 4 个新接口
 
-  [阶段3/6] 接口特征提取...
-    → inherited_apis 为空，跳过特征提取
-
-  [阶段4/6] 架构识别接口（48 个文件，分 5 批）...
+  [阶段3/4] 架构识别接口（48 个文件，分 5 批）...
     → 批次 1/5 (文件 1-10): 发现 3 个候选接口
     → 批次 2/5 (文件 11-20): 发现 2 个候选接口
     → 批次 3/5 (文件 21-30): 发现 5 个候选接口
     → 批次 4/5 (文件 31-40): 发现 1 个候选接口
     → 批次 5/5 (文件 41-48): 发现 2 个候选接口
 
-  [阶段5/6] 外部接口筛选...
-    → 合并去重后 12 个候选，逐条审查...
-    → 筛选完成: 保留 9 个，排除 3 个（测试函数 1、无外部输入 2）
-
-  [阶段6/6] 输出结果...
-    → api.json + finder_summary.md 已生成
+  [阶段4/4] 外部接口筛选...
+    → 合并去重后 18 个候选，逐条审查...
+    → 筛选完成: 保留 14 个，排除 4 个（测试函数 1、无外部输入 3）
 
   分析完成。
-  范围: 127 个文件 | 外部接口: 9 个
+  范围: 127 个文件 | 外部接口: 14 个（12 个继承 + 2 个新发现）
   输出: /srv/workspace/work_code/src/.ethunter_out/api-finder/api.json
         /srv/workspace/work_code/src/.ethunter_out/api-finder/finder_summary.md
 ```
@@ -927,35 +824,37 @@ Agent:
   [恢复检查] 发现 progress.json，phase = "arch_identify"
   [恢复检查] arch_identify_state.json 确认存在，批次 3/5 未完成
 
-  [阶段4/6] 从批次 3 (文件 21-30) 继续...
+  [阶段3/4] 从批次 3 (文件 21-30) 继续...
     → 批次 3/5: 发现 4 个候选接口
     → 批次 4/5 (文件 31-40): 发现 1 个候选接口
     → 批次 5/5 (文件 41-48): 发现 3 个候选接口
 
-  [阶段5/6] 外部接口筛选...
-  [阶段6/6] 输出结果...
-
-  分析完成。外部接口: 11 个
+  [阶段4/4] 外部接口筛选...
+  分析完成。外部接口: 14 个
 ```
 
-### 迭代分析（第二次分析，有 old_api.json）
+### 迭代分析（代码更新后，重新运行 api-fixer + api-finder）
 
 ```
+用户: /api-fixer /srv/workspace/work_code/src
+→ api-fixer 完成：15 个历史接口中 13 个继承，2 个淘汰（函数已删除）
+
 用户: /api-finder /srv/workspace/work_code/src
 
 Agent:
   [初始化] 分析范围: 130 个 .c/.h 文件（新增 3 个文件）。
-  [阶段1/6] 了解项目架构... → arch.md 已生成
-  [阶段2/6] 接口继承... → old_api.json 中 12 个历史接口，10 个仍在范围内 → 继承 10 个
-  [阶段3/6] 接口特征提取...
-    → 子阶段一（收集特征）：从 10 个种子中提取 3 种注册模式
+  [恢复检查] 未发现 progress.json（或已删除），全新分析。
+
+  [阶段1/4] 了解项目架构... → arch.md 已生成
+  [阶段2/4] 接口特征提取...
+    → 读取 api-fixer/inherited_apis.json（13 个种子接口）
+    → 子阶段一（收集特征）：从 13 个种子中提取 3 种注册模式
     → 子阶段二（推广匹配）：发现 4 个新接口
-  [阶段4/6] 架构识别接口... → 分批分析完成，发现 5 个候选接口
-  [阶段5/6] 外部接口筛选... → 合并去重后 19 个候选，保留 14 个
-  [阶段6/6] 输出结果...
+  [阶段3/4] 架构识别接口... → 分批分析完成，发现 5 个候选接口
+  [阶段4/4] 外部接口筛选... → 合并去重后 19 个候选，保留 14 个
 
   分析完成。
-  范围: 130 个文件 | 外部接口: 14 个（10 个继承 + 4 个新发现）
+  范围: 130 个文件 | 外部接口: 14 个（13 个继承 + 1 个新发现）
 ```
 
 ---
