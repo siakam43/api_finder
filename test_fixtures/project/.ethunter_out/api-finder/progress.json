@@ -1,0 +1,7 @@
+{
+  "phase": "done",
+  "arch_analysis": { "status": "completed" },
+  "feature": { "status": "completed", "state_file": "tmp/feature_state.json" },
+  "arch_identify": { "status": "completed", "state_file": "tmp/arch_identify_state.json" },
+  "filter": { "status": "completed", "state_file": "tmp/filter_state.json" }
+}

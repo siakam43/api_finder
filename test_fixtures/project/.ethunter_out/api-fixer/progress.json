@@ -1,0 +1,17 @@
+{
+  "phase": "done",
+  "total": 10,
+  "processed": 10,
+  "results": [
+    {"name": "handle_user_request", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "result": "inherited", "path_updated": false, "reason": null},
+    {"name": "handler_func_b", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "result": "inherited", "path_updated": true, "reason": "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 /home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c"},
+    {"name": "handler_func_c", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "result": "eliminated", "path_updated": false, "reason": "[fallback] 函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"},
+    {"name": "legacy_handler", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/legacy.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/legacy.c", "result": "eliminated", "path_updated": false, "reason": "[fallback] 函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"},
+    {"name": "duplicate_name", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "result": "inherited", "path_updated": false, "reason": null},
+    {"name": "duplicate_name", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "result": "eliminated", "path_updated": false, "reason": "[fallback] 函数定义未在原路径对应的文件中找到，且同名函数 duplicate_name 已被其他 old_api 条目继承（文件：/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c），跳过 fallback"},
+    {"name": "process_ipc_message", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "result": "inherited", "path_updated": false, "reason": null},
+    {"name": "read_from_shared_memory", "original_file": "comm/msg_handler.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "result": "inherited", "path_updated": false, "reason": null},
+    {"name": "handle_ipc_queue", "original_file": "io/ipc_handler.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c", "result": "inherited", "path_updated": false, "reason": null},
+    {"name": "deleted_api", "original_file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/removed.c", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/removed.c", "result": "eliminated", "path_updated": false, "reason": "[fallback] 函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"}
+  ]
+}

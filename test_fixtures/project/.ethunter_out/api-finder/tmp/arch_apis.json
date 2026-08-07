@@ -1,0 +1,5 @@
+[
+  {"name": "handle_system_event", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "form": "parameter_input", "reason": "注册于 cmd_table[] 和 event_handlers[]，void* event_data 参数接收外部事件数据，无内部调用者，与事件系统通信边界关联"},
+  {"name": "dispatch_ioctl", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "form": "parameter_input", "reason": "注册于 cmd_table[]，void* arg 来自用户态 ioctl copy_from_user，无内部调用者（仅 internal_dispatcher 被其调用而非调用它），与 ioctl 通信边界关联"},
+  {"name": "read_device_status", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c", "form": "channel_read", "reason": "函数体内通过 readl() 从 MMIO 地址 0xFE000000 读取硬件状态寄存器，数据来自外部硬件设备，与 MMIO 通信边界关联"}
+]

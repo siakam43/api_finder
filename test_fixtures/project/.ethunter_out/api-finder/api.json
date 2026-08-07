@@ -1,0 +1,9 @@
+[
+  {"name": "handler_func_b", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c"},
+  {"name": "process_ipc_message", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c"},
+  {"name": "read_from_shared_memory", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c"},
+  {"name": "handle_ipc_queue", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c"},
+  {"name": "handle_system_event", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c"},
+  {"name": "dispatch_ioctl", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c"},
+  {"name": "read_device_status", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c"}
+]

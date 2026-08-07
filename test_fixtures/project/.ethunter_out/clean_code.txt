@@ -1,0 +1,9 @@
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.h
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.h
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.h
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/internal/helpers.c
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/internal/helpers.h
+/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/tests/test_mocks.c
