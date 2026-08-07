@@ -233,7 +233,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 用两种方法检查 <project_dir>/.ethunter_out/api-fixer/inherited_apis.json 是否存在。
 ├── 确认不存在 → 跳过本阶段。
 │     更新 progress.json：feature.status = "completed"，phase = "arch_identify"
-│     继续下一阶段（五、架构识别接口）
+│     继续下一阶段
 ├── 确认存在 → 读取文件内容。
 │     ├── 内容为 []（空数组）→ 跳过本阶段（同上）
 │     └── 内容不为空 → 进入本阶段
