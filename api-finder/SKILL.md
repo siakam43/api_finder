@@ -129,9 +129,6 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
    ├── 确认不存在 → 全新分析
    └── 确认存在 → 读取 progress.json，找到当前 phase 字段的值
 
-   向后兼容处理：如果 progress.json 存在且 phase = "arch_analysis"，
-   将 phase 更新为 "feature"，移除 arch_analysis 状态字段，保存 progress.json。
-
 2. 前置依赖检查：用两种方法检查 <project_dir>/.ethunter_out/api-archreader/arch.md 是否存在。
    根据判断规则：
    ├── 确认存在 → 继续步骤 3
