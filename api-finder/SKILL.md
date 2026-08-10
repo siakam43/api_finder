@@ -172,6 +172,10 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 复杂阶段。从继承接口中提取注册特征，在全代码范围内推广匹配。
 
+**输入依赖：** 本阶段需要以下上游 skill 的输出件：
+- `<project_dir>/.ethunter_out/api-fixer/inherited_apis.json` — 种子接口列表
+- `<project_dir>/.ethunter_out/api-archreader/arch.md` — 外部通信边界（用于交叉验证）
+
 ### 前置条件检查
 
 ```
@@ -211,7 +215,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 初始化时：
 - `sub_phase` = `"collect"`
-- 读取 inherited_apis.json，令 `seeds.total` = 条目数
+- 读取 `<project_dir>/.ethunter_out/api-fixer/inherited_apis.json`，令 `seeds.total` = 条目数
 - `seeds.current` = 1
 - `seeds.remaining` = `[1, 2, ..., total]`（1-based 序号，对应 inherited_apis.json 中的索引位置）
 - `seeds.done` = `[]`
@@ -228,7 +232,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 **对当前种子执行以下分析：**
 
-1. 读取 `inherited_apis.json` 中第 `seeds.current` 个条目（1-based），获取函数名（记为 `$FUNC`）和文件路径。
+1. 读取 `<project_dir>/.ethunter_out/api-fixer/inherited_apis.json` 中第 `seeds.current` 个条目（1-based），获取函数名（记为 `$FUNC`）和文件路径。
 
 2. 找到 `$FUNC` 在代码中的**全部使用点**：
    - 优先使用 `codegraph_explore` 查询函数引用
@@ -324,8 +328,8 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
    - **动态注册：** 搜索注册函数的所有调用点。使用 `grep -rn "<register_func>(" <project_dir>` 找到所有调用该注册函数的位置，提取每个调用点中被注册的函数（即 `callback_param_index` 位置的参数）。
 
 3. 对找到的每个函数（作为候选接口）：
-   - 如果该函数已在 inherited_apis.json 中 → 跳过，不计入新发现
-   - 结合 arch.md 的"外部通信边界"信息做 LLM 交叉验证：
+   - 如果该函数已在 `<project_dir>/.ethunter_out/api-fixer/inherited_apis.json` 中 → 跳过，不计入新发现
+   - 结合 `<project_dir>/.ethunter_out/api-archreader/arch.md` 的"外部通信边界"信息做 LLM 交叉验证：
      - 该函数是否能与某个通信边界关联？
      - 函数功能是否对应某个外部实体的通信需求？
    - **无法与任何通信边界关联 → 排除**（误报优先原则）
@@ -350,9 +354,12 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
 
 ## 四、架构识别接口（arch_identify）
 
-最核心的复杂阶段。根据 arch.md 的架构信息，逐文件深入分析，识别两种形式的外部接口。
+最核心的复杂阶段。根据 `<project_dir>/.ethunter_out/api-archreader/arch.md` 的架构信息，逐文件深入分析，识别两种形式的外部接口。
 
 **本阶段永不跳过。** 即使无继承接口、无特征匹配，架构识别也必须执行。
+
+**输入依赖：** 本阶段需要以下上游 skill 的输出件：
+- `<project_dir>/.ethunter_out/api-archreader/arch.md` — 代码分区映射和外部通信边界
 
 ### 进入检查
 
@@ -367,7 +374,7 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
 
 ### 全新启动 — 准备任务列表
 
-1. 读取 `arch.md` 的"代码分区映射"部分，提取全部文件路径（核心通信文件 + 内部实现文件），组成 `file_list`。
+1. 读取 `<project_dir>/.ethunter_out/api-archreader/arch.md` 的"代码分区映射"部分，提取全部文件路径（核心通信文件 + 内部实现文件），组成 `file_list`。
 
 2. 按下列优先级排序（如果 arch.md 中已有优先级标注，直接使用）：
    - 核心通信文件（优先级高）→ 在前
