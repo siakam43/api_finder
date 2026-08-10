@@ -26,7 +26,6 @@ description: Use when the user invokes /api-finder or asks to identify external 
 分析完成后在 `<project_dir>/.ethunter_out/api-finder/` 下生成：
 - `api.json` — 识别出的外部接口列表
 - `finder_summary.md` — 逐条识别理由说明
-- `arch.md` — 项目架构分析（中间产物）
 - `progress.json` — 断点续分析状态
 - `tmp/` — 各阶段中间结果和状态文件
 
@@ -127,16 +126,24 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 ```
 1. 用两种方法检查 <project_dir>/.ethunter_out/api-finder/progress.json 是否存在。
    根据判断规则：
-   ├── 确认不存在 → 全新分析，从"三、了解项目架构"开始
+   ├── 确认不存在 → 全新分析
    └── 确认存在 → 读取 progress.json，找到当前 phase 字段的值
 
-2. 如果 phase 指向复杂阶段（feature / arch_identify / filter）：
+   向后兼容处理：如果 progress.json 存在且 phase = "arch_analysis"，
+   将 phase 更新为 "feature"，移除 arch_analysis 状态字段，保存 progress.json。
+
+2. 前置依赖检查：用两种方法检查 <project_dir>/.ethunter_out/api-archreader/arch.md 是否存在。
+   根据判断规则：
+   ├── 确认存在 → 继续步骤 3
+   └── 确认不存在 → **报错退出**。提示用户先运行 /api-archreader <project_dir>
+
+3. 如果 phase 指向复杂阶段（feature / arch_identify / filter）：
    用两种方法检查对应 state_file 指向的文件是否存在：
    ├── 确认存在 → 加载状态文件，从断点处继续该阶段
    └── 确认不存在（明确报错）→ 状态文件丢失，该阶段退回重做
        （将 progress.json 中该阶段的 status 改为 pending，phase 改回该阶段）
 
-3. 如果 phase = "done"：分析已完成，告知用户并停止。
+4. 如果 phase = "done"：分析已完成，告知用户并停止。
    用户可以手动删除 progress.json 后重新分析。
 ```
 
@@ -144,8 +151,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 ```json
 {
-  "phase": "arch_analysis|feature|arch_identify|filter|done",
-  "arch_analysis": { "status": "pending|in_progress|completed" },
+  "phase": "feature|arch_identify|filter|done",
   "feature": {
     "status": "pending|in_progress|completed",
     "state_file": "tmp/feature_state.json"
@@ -165,65 +171,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 
 ---
 
-## 三、了解项目架构（arch_analysis）
-
-本阶段是后续所有分析的基石。arch.md 的质量直接决定最终识别效果。
-
-### 进入检查
-
-```
-1. 用两种方法检查 <project_dir>/.ethunter_out/api-finder/arch.md 是否存在。
-   根据判断规则：
-   ├── 确认存在 → 跳过本阶段，更新 progress.json 中 arch_analysis.status = "completed"，
-   │     phase = "feature"，继续下一阶段
-   └── 确认不存在 → 执行架构分析
-```
-
-### 分析执行
-
-更新 progress.json：设置 `arch_analysis.status = "in_progress"`，`phase = "arch_analysis"`。
-
-1. **浏览关键文件：** 优先从 scope_files 中选取头文件（`.h`）开始阅读，了解模块对外暴露的类型定义和函数声明。然后选取几个核心的 `.c` 文件（优先选择 main 文件、init 文件、或文件名包含 `main`/`init`/`core`/`drv` 关键词的文件），了解模块的实现逻辑。
-
-2. **分析三个维度：**
-
-   - **模块概要：** 本模块的功能定位是什么？在系统中扮演什么角色？是内核驱动、UEFI固件、XLoader、还是协处理器固件（ISP/SensorHub/GPU）？主要职责有哪些？结合目录名、文件名、代码注释和函数命名惯例进行推断。
-
-   - **外部通信边界：** 本模块与哪些外部实体有通信？通信方向是什么（外部→本模块、本模块→外部、双向）？通信信道是什么（系统调用/ioctl、共享内存、IPC消息队列、网络socket、硬件寄存器/MMIO、DMA缓冲区、GPIO/中断、文件系统）？结合代码中出现的通信相关 API（如 `copy_from_user`、`readl`/`writel`、`shm_open`、`msgsnd`/`msgrcv`、`recv`/`send`、`read`/`write` 等）进行推断。
-
-   - **代码分区映射：** 按功能或通信方向将 scope_files 中的文件划分为不同的组。标注哪些文件最有可能包含外部接口（核心通信文件），哪些是内部实现（内部工具、配置管理、日志等，但也需要覆盖，因为可能包含间接的外部通信点）。
-
-3. **生成任务文件列表：** 从代码分区映射中整理出一个完整的待分析文件列表（必须在 scope_files 范围内），按优先级排序：核心通信文件在前，内部实现文件在后。该列表将作为"五、架构识别接口"的任务清单。
-
-4. **输出 arch.md：** 按照以下模板写入 `<project_dir>/.ethunter_out/api-finder/arch.md`：
-
-```markdown
-# 项目架构分析 — <project_name>
-
-## 模块概要
-本项目模块是 <功能定位>，在系统中扮演 <角色> 角色。
-主要职责包括：<列举关键职责>。
-
-## 外部通信边界
-| 外部实体 | 通信方向 | 通信信道 | 说明 |
-|---------|---------|---------|------|
-| <实体名> | 外部→本模块 | <信道名> | <具体说明> |
-
-## 代码分区映射
-
-### 核心通信文件（待深入分析，优先级高）
-- <文件绝对路径> — <说明，为何认为该文件包含外部接口>
-- <文件绝对路径> — <说明>
-
-### 内部实现文件（优先级低，但也需覆盖）
-- <文件绝对路径> — <说明>
-```
-
-5. 更新 progress.json：`arch_analysis.status = "completed"`，`phase = "feature"`。
-
----
-
-## 四、接口特征提取（feature）
+## 三、接口特征提取（feature）
 
 复杂阶段。从继承接口中提取注册特征，在全代码范围内推广匹配。
 
@@ -403,7 +351,7 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
 
 ---
 
-## 五、架构识别接口（arch_identify）
+## 四、架构识别接口（arch_identify）
 
 最核心的复杂阶段。根据 arch.md 的架构信息，逐文件深入分析，识别两种形式的外部接口。
 
@@ -553,7 +501,7 @@ b. 确认读取的数据来源：
 
 ---
 
-## 六、外部接口筛选（filter）
+## 五、外部接口筛选（filter）
 
 合并前三阶段的接口列表，逐条审查，排除不符合条件的接口。
 
@@ -744,7 +692,7 @@ b. 确认读取的数据来源：
 
 ---
 
-## 七、权限申请
+## 六、权限申请
 
 本 skill 运行时需要以下工具权限：
 
@@ -752,7 +700,7 @@ b. 确认读取的数据来源：
 |------|------|
 | `Bash` | find 枚举文件、grep 搜索代码、ls 检查文件存在、mkdir 创建输出目录 |
 | `Read` | 读取源代码文件、读取配置/状态 JSON 文件 |
-| `Write` | 写入 arch.md、progress.json、api.json、finder_summary.md 和各阶段中间/状态文件 |
+| `Write` | 写入 progress.json、api.json、finder_summary.md 和各阶段中间/状态文件 |
 | `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
 | `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
 
@@ -760,7 +708,7 @@ b. 确认读取的数据来源：
 
 ---
 
-## 八、约束规则
+## 七、约束规则
 
 1. **所有分析由主 agent 完成，不使用 sub-agent 并行分析。** 不要调用 Agent 工具分派子任务。
 
@@ -776,11 +724,14 @@ b. 确认读取的数据来源：
 
 ---
 
-## 九、使用示例
+## 八、使用示例
 
 ### 首次分析
 
 ```
+用户: /api-archreader /srv/workspace/work_code/src
+→ api-archreader 完成，输出 arch.md 到 .ethunter_out/api-archreader/
+
 用户: /api-fixer /srv/workspace/work_code/src
 → api-fixer 完成，输出 inherited_apis.json (12 个接口)
 
@@ -788,25 +739,22 @@ b. 确认读取的数据来源：
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。macro.json 已发现（按需查阅）。
-  [恢复检查] 未发现 progress.json，全新分析开始。
+  [恢复检查] 未发现 progress.json，全新分析。
+  [前置检查] api-archreader/arch.md 确认存在，继续。
 
-  [阶段1/4] 了解项目架构...
-    → 分析模块功能与通信边界...
-    → arch.md 已生成（识别出 3 个外部通信边界，48 个待分析文件）
-
-  [阶段2/4] 接口特征提取...
+  [阶段1/3] 接口特征提取...
     → 读取 api-fixer/inherited_apis.json（12 个种子接口）
     → 子阶段一（收集特征）：从 12 个种子中提取 3 种注册模式
     → 子阶段二（推广匹配）：发现 4 个新接口
 
-  [阶段3/4] 架构识别接口（48 个文件，分 5 批）...
+  [阶段2/3] 架构识别接口（48 个文件，分 5 批）...
     → 批次 1/5 (文件 1-10): 发现 3 个候选接口
     → 批次 2/5 (文件 11-20): 发现 2 个候选接口
     → 批次 3/5 (文件 21-30): 发现 5 个候选接口
     → 批次 4/5 (文件 31-40): 发现 1 个候选接口
     → 批次 5/5 (文件 41-48): 发现 2 个候选接口
 
-  [阶段4/4] 外部接口筛选...
+  [阶段3/3] 外部接口筛选...
     → 合并去重后 18 个候选，逐条审查...
     → 筛选完成: 保留 14 个，排除 4 个（测试函数 1、无外部输入 3）
 
@@ -823,21 +771,25 @@ Agent:
 
 Agent:
   [初始化] 分析范围: 127 个 .c/.h 文件。
+  [前置检查] api-archreader/arch.md 确认存在，继续。
   [恢复检查] 发现 progress.json，phase = "arch_identify"
   [恢复检查] arch_identify_state.json 确认存在，批次 3/5 未完成
 
-  [阶段3/4] 从批次 3 (文件 21-30) 继续...
+  [阶段2/3] 从批次 3 (文件 21-30) 继续...
     → 批次 3/5: 发现 4 个候选接口
     → 批次 4/5 (文件 31-40): 发现 1 个候选接口
     → 批次 5/5 (文件 41-48): 发现 3 个候选接口
 
-  [阶段4/4] 外部接口筛选...
+  [阶段3/3] 外部接口筛选...
   分析完成。外部接口: 14 个
 ```
 
-### 迭代分析（代码更新后，重新运行 api-fixer + api-finder）
+### 迭代分析（代码更新后，重新运行 api-archreader + api-fixer + api-finder）
 
 ```
+用户: /api-archreader /srv/workspace/work_code/src
+→ api-archreader 完成，输出 arch.md 到 .ethunter_out/api-archreader/
+
 用户: /api-fixer /srv/workspace/work_code/src
 → api-fixer 完成：15 个历史接口中 13 个继承，2 个淘汰（函数已删除）
 
@@ -846,14 +798,14 @@ Agent:
 Agent:
   [初始化] 分析范围: 130 个 .c/.h 文件（新增 3 个文件）。
   [恢复检查] 未发现 progress.json（或已删除），全新分析。
+  [前置检查] api-archreader/arch.md 确认存在，继续。
 
-  [阶段1/4] 了解项目架构... → arch.md 已生成
-  [阶段2/4] 接口特征提取...
+  [阶段1/3] 接口特征提取...
     → 读取 api-fixer/inherited_apis.json（13 个种子接口）
     → 子阶段一（收集特征）：从 13 个种子中提取 3 种注册模式
     → 子阶段二（推广匹配）：发现 4 个新接口
-  [阶段3/4] 架构识别接口... → 分批分析完成，发现 5 个候选接口
-  [阶段4/4] 外部接口筛选... → 合并去重后 19 个候选，保留 14 个
+  [阶段2/3] 架构识别接口... → 分批分析完成，发现 5 个候选接口
+  [阶段3/3] 外部接口筛选... → 合并去重后 19 个候选，保留 14 个
 
   分析完成。
   范围: 130 个文件 | 外部接口: 14 个（13 个继承 + 1 个新发现）
