@@ -126,7 +126,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 ```
 1. 用两种方法检查 <project_dir>/.ethunter_out/api-finder/progress.json 是否存在。
    根据判断规则：
-   ├── 确认不存在 → 全新分析
+   ├── 确认不存在 → 全新分析，从"三、接口特征提取"开始
    └── 确认存在 → 读取 progress.json，找到当前 phase 字段的值
 
 2. 前置依赖检查：用两种方法检查 <project_dir>/.ethunter_out/api-archreader/arch.md 是否存在。
