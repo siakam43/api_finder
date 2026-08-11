@@ -656,6 +656,8 @@ b. 确认读取的数据来源：
 
 ### 输出结果
 
+**在生成任何输出文件之前，必须重新阅读本章节的输出字段定义。不得凭记忆直接输出。**
+
 从 api_list 中提取所有 `decision = "keep"` 且 `validated = true` 的条目，按原始顺序写入：
 
 1. **api.json** — `<project_dir>/.ethunter_out/api-finder/api.json`：
