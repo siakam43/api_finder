@@ -83,7 +83,7 @@ find <project_dir> -type f \( -name "*.c" -o -name "*.h" \)
 
 - `<project_dir>/.ethunter_out/api-finder/api.json` — 外部接口列表（输入）
 - `<project_dir>/.ethunter_out/api-finder/finder_summary.md` — 接口识别理由（参考）
-- `<project_dir>/.ethunter_out/api-finder/arch.md` — 项目架构分析（复用）
+- `<project_dir>/.ethunter_out/api-archreader/arch.md` — 项目架构分析（复用）
 
 两种检查方法：
 - 方法一：`ls <文件路径>`
@@ -309,7 +309,7 @@ LLM 可根据代码语义灵活判断。
 
 #### d. 通信边界关联验证
 
-参考 `<project_dir>/.ethunter_out/api-finder/finder_summary.md` 中该接口的识别理由，以及 `<project_dir>/.ethunter_out/api-finder/arch.md` 中的"外部通信边界"表。
+参考 `<project_dir>/.ethunter_out/api-finder/finder_summary.md` 中该接口的识别理由，以及 `<project_dir>/.ethunter_out/api-archreader/arch.md` 中的"外部通信边界"表。
 
 确认该接口是否能与 arch.md 中的某个通信边界明确关联：
 - 该接口与哪个外部模块/实体通信？
@@ -480,7 +480,7 @@ LLM 可根据代码语义灵活判断。
 | 工具 | 用途 |
 |------|------|
 | `Bash` | find 枚举文件、grep 搜索代码/调用关系、ls 检查文件、mkdir 创建目录 |
-| `Read` | 读取源码、api.json、finder_summary.md、arch.md、各阶段 JSON 状态文件 |
+| `Read` | 读取源码、api.json、finder_summary.md、arch.md、各阶段 JSON 状态文件。arch.md 位于 `.ethunter_out/api-archreader/` 下 |
 | `Write` | 写入 progress.json、analysis_state.json、api_clean.json、cleaner_summary.md |
 | `mcp__codegraph__codegraph_explore` | (可选) codegraph 可用时优先使用的代码探索工具 |
 | `mcp__plugin_oh-my-claudecode_t__ast_grep_search` | (可选) ast-grep 代码模式搜索 |
