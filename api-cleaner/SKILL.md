@@ -400,7 +400,18 @@ LLM 可根据代码语义灵活判断。
 
 ### 4.1 api_clean.json
 
-从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api_clean.json`：
+从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api_clean.json`。
+
+每个条目包含以下 **4 个字段**，直接从 `analysis_state.json` 对应条目取值：
+
+| 字段 | 来源 | 说明 |
+|------|------|------|
+| `name` | `analysis_state.json` 的 `name` | 函数名 |
+| `file` | `analysis_state.json` 的 `file` | 文件绝对路径 |
+| `form` | `analysis_state.json` 的 `form` | `parameter_input` / `channel_read` / `both` |
+| `taint_data` | `analysis_state.json` 的 `taint_data` | 外部输入变量名或来源 |
+
+其余字段（`index`、`status`、`decision`、`reason`）不输出。
 
 ```json
 [
@@ -408,8 +419,6 @@ LLM 可根据代码语义灵活判断。
   {"name": "func_c", "file": "/abs/path/to/c.c", "form": "channel_read", "taint_data": "共享内存 shm_ptr"}
 ]
 ```
-
-各字段直接取自 `analysis_state.json` 中对应条目的 `form` 和 `taint_data` 字段。
 
 ### 4.2 cleaner_summary.md
 
