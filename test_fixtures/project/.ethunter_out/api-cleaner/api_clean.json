@@ -1,9 +1,47 @@
 [
-  {"name": "handler_func_b", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "form": "parameter_input", "taint_data": "msg_data"},
-  {"name": "process_ipc_message", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "form": "parameter_input", "taint_data": "ipc_buf"},
-  {"name": "read_from_shared_memory", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c", "form": "channel_read", "taint_data": "共享内存 shm_ptr"},
-  {"name": "handle_ipc_queue", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c", "form": "channel_read", "taint_data": "IPC msgrcv → buf"},
-  {"name": "handle_system_event", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "form": "parameter_input", "taint_data": "event_data"},
-  {"name": "dispatch_ioctl", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c", "form": "parameter_input", "taint_data": "arg"},
-  {"name": "read_device_status", "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c", "form": "channel_read", "taint_data": "readl(MMIO) → status"}
+  {
+    "name": "handler_func_b",
+    "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+    "form": "parameter_input",
+    "taint_data": "msg_type/msg_data",
+    "local_module": "固件通信子系统",
+    "partner_module": "外部进程",
+    "para_index": "0/1"
+  },
+  {
+    "name": "process_ipc_message",
+    "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+    "form": "parameter_input",
+    "taint_data": "ipc_buf/buf_len",
+    "local_module": "固件通信子系统",
+    "partner_module": "外部进程",
+    "para_index": "0/1"
+  },
+  {
+    "name": "read_from_shared_memory",
+    "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+    "form": "both",
+    "taint_data": "offset/size/共享内存 shm_ptr",
+    "local_module": "固件通信子系统",
+    "partner_module": "外部模块（共享内存）",
+    "para_index": "1/2/-1"
+  },
+  {
+    "name": "handle_ipc_queue",
+    "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c",
+    "form": "channel_read",
+    "taint_data": "IPC msgrcv → buf",
+    "local_module": "固件通信子系统",
+    "partner_module": "外部进程",
+    "para_index": "-1"
+  },
+  {
+    "name": "dispatch_ioctl",
+    "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c",
+    "form": "parameter_input",
+    "taint_data": "request/arg",
+    "local_module": "固件通信子系统",
+    "partner_module": "用户态应用程序",
+    "para_index": "0/1"
+  }
 ]

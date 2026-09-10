@@ -3,12 +3,14 @@
 // 模拟内核/固件中的 MMIO 读取
 #define readl(addr) (*(volatile unsigned int *)(addr))
 
+// 模拟内核/固件中的 IPC 消息接收系统调用
+#define msgrcv(msgid, buf, size, type, flags) (size)
+
 // [外部接口-channel_read] 从 IPC 消息队列读取外部进程发来的消息
 int handle_ipc_queue(void) {
     char buf[256];
-    // msgrcv 是 IPC 消息接收的系统调用
-    // msgrcv(msgid, buf, sizeof(buf), 0, 0);
-    return 0;
+    int n = msgrcv(1, buf, sizeof(buf), 0, 0);
+    return n;
 }
 
 // [外部接口-channel_read] 从 MMIO 寄存器读取外部硬件状态

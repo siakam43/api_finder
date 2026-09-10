@@ -1,0 +1,95 @@
+{
+  "api_list": [
+    {
+      "index": 1,
+      "name": "handler_func_b",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+      "status": "completed",
+      "form": "parameter_input",
+      "decision": "keep",
+      "reason": "参数 msg_type(int,参数0) 与 msg_data(void*,参数1) 均非框架/输出参数，外部输入参数个数=2，直接保留；全项目 grep 仅有头文件声明与定义，无内部调用者（该接口为继承接口，路径已由 api-fixer 从 core/dispatcher.c 更新为 comm/msg_handler.c）；msg_type+msg_data 构成 IPC 消息(type+payload)格式，位于 comm/msg_handler.c（arch.md 界定的 IPC 消息处理文件），与「外部进程→IPC 消息队列」边界匹配",
+      "taint_data": "msg_type/msg_data",
+      "local_module": "固件通信子系统",
+      "partner_module": "外部进程",
+      "para_index": "0/1"
+    },
+    {
+      "index": 2,
+      "name": "process_ipc_message",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+      "status": "completed",
+      "form": "parameter_input",
+      "decision": "keep",
+      "reason": "注释标记为注册的 IPC 消息处理回调；参数 ipc_buf(void*,参数0)、buf_len(int,参数1) 均非框架/输出参数，外部输入参数个数=2，直接保留；全项目 grep 无调用点（仅头文件声明与定义）；ipc_buf/buf_len 与 IPC 消息缓冲区格式匹配，关联「外部进程→IPC 消息队列」边界",
+      "taint_data": "ipc_buf/buf_len",
+      "local_module": "固件通信子系统",
+      "partner_module": "外部进程",
+      "para_index": "0/1"
+    },
+    {
+      "index": 3,
+      "name": "read_from_shared_memory",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/comm/msg_handler.c",
+      "status": "completed",
+      "form": "both",
+      "decision": "keep",
+      "reason": "参数 dst(void*,参数0) 为 memcpy 目标，仅写入不读取，属输出参数跳过；offset(int,参数1)、size(int,参数2) 非框架/非输出参数，外部输入参数个数=2；函数体 memcpy 从共享内存 0x10000000 读取 size 字节（信道传输量为整段缓冲区，非单整数读取）；与「外部模块（共享内存）→共享内存」边界匹配",
+      "taint_data": "offset/size/共享内存 shm_ptr",
+      "local_module": "固件通信子系统",
+      "partner_module": "外部模块（共享内存）",
+      "para_index": "1/2/-1"
+    },
+    {
+      "index": 4,
+      "name": "handle_ipc_queue",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c",
+      "status": "completed",
+      "form": "channel_read",
+      "decision": "keep",
+      "reason": "函数体 msgrcv(1, buf, sizeof(buf)=256, 0, 0) 从 IPC 消息队列读取 256 字节缓冲区，信道上传输的是缓冲区而非单个整数，2.5.b 单整数排除不适用；无入参；全项目 grep 无调用者；与「外部进程→IPC 消息队列」边界匹配",
+      "taint_data": "IPC msgrcv → buf",
+      "local_module": "固件通信子系统",
+      "partner_module": "外部进程",
+      "para_index": "-1"
+    },
+    {
+      "index": 5,
+      "name": "handle_system_event",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c",
+      "status": "completed",
+      "form": "parameter_input",
+      "decision": "exclude",
+      "reason": "无法与 arch.md 通信边界表建立明确关联：finder_summary 关联的「外部事件系统」不在边界表（用户态应用程序/外部进程/外部模块（共享内存）/硬件设备）中；cmd_table[]/event_handlers[] 两个注册点均无法对应表中任一条边界，按 2.4.d「无法与任何通信边界明确关联→排除」处理",
+      "taint_data": "event_data",
+      "local_module": "固件通信子系统",
+      "partner_module": null,
+      "para_index": null
+    },
+    {
+      "index": 6,
+      "name": "dispatch_ioctl",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/core/dispatcher.c",
+      "status": "completed",
+      "form": "parameter_input",
+      "decision": "keep",
+      "reason": "ioctl dispatcher（注释与 finder_summary 架构识别一致）；参数 request(unsigned int,参数0)、arg(void*,参数1) 均非框架/输出参数，外部输入参数个数=2；arg 承载用户态经 copy_from_user 传入的外部数据；cmd_table[] 中 {3, dispatch_ioctl} 为注册点而非调用，全项目 grep 无调用者；与「用户态应用程序→ioctl 系统调用」边界匹配",
+      "taint_data": "request/arg",
+      "local_module": "固件通信子系统",
+      "partner_module": "用户态应用程序",
+      "para_index": "0/1"
+    },
+    {
+      "index": 7,
+      "name": "read_device_status",
+      "file": "/home/admin/cc/wksp/siakam_security_skills/api_finder/test_fixtures/project/io/ipc_handler.c",
+      "status": "completed",
+      "form": "channel_read",
+      "decision": "exclude",
+      "reason": "readl((volatile unsigned int *)0xFE000000) 读回的原始数据仅为单个 uint32 状态寄存器值（非内存地址、未用于内存操作），信道上传输的就是单整数，按 2.5.b 单整数读取排除",
+      "taint_data": "readl(MMIO 0xFE000000) → status",
+      "local_module": "固件通信子系统",
+      "partner_module": null,
+      "para_index": null
+    }
+  ]
+}
