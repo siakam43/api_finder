@@ -119,7 +119,9 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
 ]
 ```
 
-2. 用两种方法检查 `<project_dir>/.ethunter_out/api-cleaner/progress.json` 是否存在：
+2. 确定本模块名称（local_module）：读取 `<project_dir>/.ethunter_out/api-archreader/arch.md` 的"模块概要"章节，提取简洁模块名（如 `ISP 固件`、`SensorHub 固件`）。该值在本次分析中所有接口共用。
+
+3. 用两种方法检查 `<project_dir>/.ethunter_out/api-cleaner/progress.json` 是否存在：
 
 ```
 ├── 确认不存在 → 全新分析。将 api.json 中所有接口写入 analysis_state.json，全部 status = "pending"
@@ -150,7 +152,10 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
       "form": null,
       "decision": null,
       "reason": null,
-      "taint_data": null
+      "taint_data": null,
+      "local_module": null,
+      "partner_module": null,
+      "para_index": null
     }
   ]
 }
@@ -161,9 +166,9 @@ mkdir -p <project_dir>/.ethunter_out/api-cleaner/tmp
 - `api_analyzed` = 0
 - `api_kept` = 0
 - `phase` = `"analyzing"`
-- `api_list` 中每个条目：index 递增（1-based），status = `"pending"`，form/decision/reason 均为 null
+- `api_list` 中每个条目：index 递增（1-based），status = `"pending"`，form/decision/reason/taint_data/partner_module/para_index 均为 null，local_module = 第 2 步确定的本模块名称（所有条目同一值）
 
-3. 更新 progress.json 中 `phase = "analyzing"`，保存。
+4. 更新 progress.json 中 `phase = "analyzing"`，保存。
 
 ---
 
