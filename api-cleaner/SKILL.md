@@ -387,6 +387,16 @@ LLM 可根据代码语义灵活判断。
 
 ### 2.7 记录结论
 
+**组装新字段（仅 decision = `"keep"` 的接口执行；排除的接口 partner_module/para_index 保持 null）：**
+
+1. 组装 `para_index`：按 `taint_data` 项顺序逐项对应（form = `both` 时参数项在前、信道项在后）：
+   - 参数项 → 该参数在函数签名中的 0-based 索引（2.4.b 记录）
+   - 信道项 → `-1`
+   - 多项以 `/` 分割；单项也是字符串（如 `"0"`、`"-1"`）
+   - 项数必须与 `taint_data` 项数一致，组装后逐项核对
+
+2. form = `both` 时合并 `partner_module`：将 2.4.d 与 2.5.c 的关联结果去重合并，多个外部实体名以 `/` 分割。
+
 更新 `analysis_state.json` 中当前接口的条目：
 
 ```json
@@ -398,7 +408,10 @@ LLM 可根据代码语义灵活判断。
   "form": "parameter_input|channel_read|both|none",
   "decision": "keep|exclude",
   "reason": "<具体证据，不使用模糊描述>",
-  "taint_data": "<外部输入变量名或来源>"
+  "taint_data": "<外部输入变量名或来源>",
+  "local_module": "<本模块名称，初始化时已写入>",
+  "partner_module": "<交互模块名称，多个以 / 分割；排除接口为 null>",
+  "para_index": "<与 taint_data 逐项对应的参数索引，多个以 / 分割，信道项为 -1；排除接口为 null>"
 }
 ```
 
