@@ -452,7 +452,7 @@ LLM 可根据代码语义灵活判断。
 
 从 `analysis_state.json` 中 `api_list` 提取所有 `decision = "keep"` 的条目，输出到 `<project_dir>/.ethunter_out/api-cleaner/api_clean.json`。
 
-每个条目包含以下 **4 个字段**，直接从 `analysis_state.json` 对应条目取值：
+每个条目包含以下 **7 个字段**，直接从 `analysis_state.json` 对应条目取值：
 
 | 字段 | 来源 | 说明 |
 |------|------|------|
@@ -460,13 +460,20 @@ LLM 可根据代码语义灵活判断。
 | `file` | `analysis_state.json` 的 `file` | 文件绝对路径 |
 | `form` | `analysis_state.json` 的 `form` | `parameter_input` / `channel_read` / `both` |
 | `taint_data` | `analysis_state.json` 的 `taint_data` | 外部输入变量名或来源 |
+| `local_module` | `analysis_state.json` 的 `local_module` | 本模块名称 |
+| `partner_module` | `analysis_state.json` 的 `partner_module` | 交互模块名称，多个以 `/` 分割 |
+| `para_index` | `analysis_state.json` 的 `para_index` | 与 taint_data 逐项对应的参数索引，多个以 `/` 分割，信道项为 -1 |
 
 其余字段（`index`、`status`、`decision`、`reason`）不输出。
 
 ```json
 [
-  {"name": "func_a", "file": "/abs/path/to/a.c", "form": "parameter_input", "taint_data": "data/len"},
-  {"name": "func_c", "file": "/abs/path/to/c.c", "form": "channel_read", "taint_data": "共享内存 shm_ptr"}
+  {"name": "func_a", "file": "/abs/path/to/a.c", "form": "parameter_input", "taint_data": "data/len",
+   "local_module": "ISP 固件", "partner_module": "用户态 APP", "para_index": "1/2"},
+  {"name": "func_c", "file": "/abs/path/to/c.c", "form": "channel_read", "taint_data": "共享内存 shm_ptr",
+   "local_module": "ISP 固件", "partner_module": "DDR 控制器", "para_index": "-1"},
+  {"name": "func_d", "file": "/abs/path/to/d.c", "form": "both", "taint_data": "buf/共享内存 shm_ptr",
+   "local_module": "ISP 固件", "partner_module": "用户态 APP/DDR 控制器", "para_index": "0/-1"}
 ]
 ```
 
