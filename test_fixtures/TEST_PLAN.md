@@ -57,7 +57,7 @@ test_fixtures/project/
 
 ## 运行方式
 
-**运行前必须删除目标 skill 的 `progress.json`。** fixture 中的 `progress.json` 是 `phase = "done"` 的录制结果，skill 读到会直接停止并告知"分析已完成"，不会重新分析——照下面的命令直接跑会得到假绿。输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
+**运行前必须删除目标 skill 的 `progress.json`。** fixture 里的 `progress.json` 是已完成的录制结果：api-fixer 与 api-finder 读到 `phase = "done"` 会直接停止并告知"分析已完成"；api-cleaner 没有据此停止的分支，会直接从录制的 `analysis_state.json` 重新生成输出——三种情况都不会真正重新分析，照下面的命令直接跑会得到假绿。
 
 ```
 # 1. api-fixer
@@ -65,8 +65,12 @@ rm test_fixtures/project/.ethunter_out/api-fixer/progress.json
 /api-fixer test_fixtures/project
 
 # 2. api-finder (依赖 api-fixer 输出)
+rm test_fixtures/project/.ethunter_out/api-finder/progress.json
 /api-finder test_fixtures/project
 
 # 3. api-cleaner (依赖 api-finder 输出)
+rm test_fixtures/project/.ethunter_out/api-cleaner/progress.json
 /api-cleaner test_fixtures/project
 ```
+
+输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
