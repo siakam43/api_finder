@@ -138,7 +138,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
   "results": [
     {"name": "func_a", "original_file": "old_api原始值", "file": "最终绝对路径",
      "result": "inherited|eliminated", "path_updated": true|false,
-     "reason": null|"<处理原因>"},
+     "reason": "[tag] 判定依据"},
     ...
   ]
 }
@@ -150,7 +150,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 - `file`：最终确定的文件绝对路径
 - `result`：`"inherited"`（继承）或 `"eliminated"`（淘汰）
 - `path_updated`：`true` 表示路径在 fallback 搜索中被更新，`false` 表示路径未变
-- `reason`：淘汰原因（`result = "inherited"` 时为 `null`；`result = "eliminated"` 时为具体淘汰理由）
+- `reason`：判定依据，格式为 `"[tag] 说明"`（tag 取值见第三节 c、d 分支），所有条目均非 null
 
 ### 入口恢复流程
 
@@ -219,7 +219,7 @@ Step 2 — 逐条目处理。对每个待处理条目（如从断点恢复，仅
   c. 函数存在性检查：在 b 确定的 file 中，使用"搜索函数定义的方法"确认该函数定义存在。
      ├── 函数定义存在 → 继承。记录：
      │     result = "inherited", path_updated = false,
-     │     reason = null
+     │     reason = "[c1] 原路径在分析范围内，且函数定义存在"
      └── 函数定义不存在 → 进入 d（fallback 搜索）
 
   d. fallback 搜索：
