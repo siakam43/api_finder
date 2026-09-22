@@ -382,18 +382,28 @@ git commit -m "test(api-fixer): update progress fixture for per-case reason tags
 /api-fixer test_fixtures/project
 ```
 
-替换为（三个 skill 的运行步骤保持原样，只加前置说明与 api-fixer 的删除命令）：
+替换为（三个 skill 的运行步骤保持原样，各加一条删除命令；因 api-cleaner 无停止分支，说明段需分别描述三种情形）：
 
 ```markdown
 ## 运行方式
 
-**运行前必须删除目标 skill 的 `progress.json`。** fixture 中的 `progress.json` 是 `phase = "done"` 的录制结果，skill 读到会直接停止并告知"分析已完成"，不会重新分析——照下面的命令直接跑会得到假绿。输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
+**运行前必须删除目标 skill 的 `progress.json`。** fixture 里的 `progress.json` 是已完成的录制结果：api-fixer 与 api-finder 读到 `phase = "done"` 会直接停止并告知"分析已完成"；api-cleaner 没有据此停止的分支，会直接从录制的 `analysis_state.json` 重新生成输出——三种情况都不会真正重新分析，照下面的命令直接跑会得到假绿。
 
 ```
 # 1. api-fixer
 rm test_fixtures/project/.ethunter_out/api-fixer/progress.json
 /api-fixer test_fixtures/project
+
+# 2. api-finder (依赖 api-fixer 输出)
+rm test_fixtures/project/.ethunter_out/api-finder/progress.json
+/api-finder test_fixtures/project
+
+# 3. api-cleaner (依赖 api-finder 输出)
+rm test_fixtures/project/.ethunter_out/api-cleaner/progress.json
+/api-cleaner test_fixtures/project
 ```
+
+输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
 
 - [ ] **Step 3: 验证并提交**
 
@@ -447,10 +457,10 @@ grep -rn "duplicate_name" test_fixtures/ | sed 's/^/  /'
 - [ ] **Step 3: 确认未波及其他 fixture**
 
 ```bash
-grep -rn "duplicate_name" test_fixtures/expected/ test_fixtures/project/.ethunter_out/api-finder/ test_fixtures/project/.ethunter_out/api-cleaner/ test_fixtures/project/.ethunter_out/api-archreader/
+grep -rn "duplicate_name" test_fixtures/expected/api-finder/ test_fixtures/expected/api-cleaner/ test_fixtures/project/.ethunter_out/api-finder/ test_fixtures/project/.ethunter_out/api-cleaner/ test_fixtures/project/.ethunter_out/api-archreader/
 ```
 
-核对点：无输出。`duplicate_name` 只被 api-fixer 的 fixture 引用，api-finder / api-cleaner / api-archreader 的预期输出均不涉及它，删除定义不影响它们的基线。
+核对点：无输出。`duplicate_name` 只被 api-fixer 自己的 fixture 引用（`expected/api-fixer/inherited_apis.json` 与 `.ethunter_out/api-fixer/` 下的文件，属预期保留），api-finder / api-cleaner / api-archreader 的预期输出均不涉及它，删除定义不影响它们的基线。
 
 - [ ] **Step 4: Commit**
 
