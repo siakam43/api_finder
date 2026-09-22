@@ -12,6 +12,8 @@
 
 **验证方式：** 每个任务编辑后用 Read 重读被改小节，逐项核对下方"核对点"；fixture 改用 Python 脚本生成并用断言校验；最后派子代理实跑一次 `/api-fixer` 做端到端验证（见验收标准）。
 
+**执行状态（已完成）：** 全部任务执行并验证通过，端到端实跑输出与 fixture 逐字段一致。执行中评审追加了后续修正，阅读前面任务时以下替换文本已被覆盖：Task 1 Step 2 的 `"[tag] 说明"` 与 Task 3 Step 1 的 `func_d`／第 3 条括注，均由 Task 7 的 Step 1-3 改到最终值；Task 5 的运行前置条件在落地后经一次修复扩展到三个 skill（见 Task 7 之前的对应提交）。
+
 ---
 
 ### Task 1: progress.json 结构示例与字段说明 + Step 2c（[c1]）
@@ -572,27 +574,6 @@ git commit -m "docs(api-fixer): final consistency pass for reason tags"
 ```
 
 （若 Step 1-4 无改动，跳过本次提交，报告即可。）
-
-- [ ] **Step 2: 核对待办项缺失**
-
-```bash
-grep -rn 'fallback\]' api-fixer/SKILL.md test_fixtures/ docs/superpowers/specs/2026-09-22-api-fixer-reason-tags-design.md
-```
-
-核对点：
-
-- `api-fixer/SKILL.md` 与 `test_fixtures/` 下**无** `[fallback]` 命中
-- spec 文件中的 `[fallback]` 命中（"问题"章节描述旧状态）属预期，保留
-- `api-fixer/SKILL.md` 中 d1 的"跳过 fallback"与 `test_fixtures/TEST_PLAN.md` 场景列中的"fallback 无结果"不含方括号，不属命中，本次不改（fallback 仍是 d 步的步骤名）
-
-- [ ] **Step 3: 最终提交**
-
-```bash
-git add api-fixer/SKILL.md test_fixtures/TEST_PLAN.md
-git commit -m "docs(api-fixer): final consistency pass for reason tags"
-```
-
-（若 Step 1/2 无改动，跳过本次提交，报告即可。）
 
 ---
 
