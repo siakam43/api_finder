@@ -404,6 +404,9 @@ git commit -m "test(api-fixer): record expected reason tags in test plan"
 7. 全文无与本次修改矛盾的段落——§四 约束规则第 4 条"严格按照 a → b → c → d 顺序"、§六 抗理性化检查表（均只描述流程与步骤，不涉及 reason 取值，应无需改动）
 8. **恢复路径与 L153 断言的矛盾：** §二 入口恢复流程会原样保留 `results` 中已处理的条目（L170-173"保留已处理结果，跳过"），而 §二 给出的唯一补救（L167-168）只针对 `phase = "done"`。若传入的是改动前写的 `progress.json`（`phase = "processing"`，含 `null` / `[fallback]` / 无 tag 的 d2 文案），恢复后文件会混合旧值与新 tag，与 L153 新增的"所有条目均非 null / 格式为 `"[tag] 说明"`"矛盾。spec 影响范围已声明"不考虑历史结果兼容"，但该决定未写进 SKILL.md。**决策点：** 是否在 §二 补一句"改动前生成的 progress.json 不做迁移，需删除后重新分析"（属新增范围，需用户确认后再改，不得擅自加）。
 9. **用词一致性：** L141 用"判定依据"、L153 用"说明"指同一位置，违反 §四 规则 6"相同语义的用词前后保持一致"。统一为同一个词（建议"判定依据"），spec 中对应措辞一并同步。
+10. **§七 示例第 4 条与 `[d1]` 定义自相矛盾：** L320 为 `→ 条目 4/15: func_d — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）`，但条目 2 是 `func_b`、条目 4 是 `func_d`，二者不同名；而 §三 L229 的 `[d1]` 定义为"同名函数 <name> 已被其他 old_api 条目继承"。该行按现有措辞不可达。**决策点（改法二选一，需用户确认）：** (a) 把条目 4 的函数名改为 `func_b`（与条目 2 同名，示例自洽）；(b) 把括注改为"同名函数已被其他 old_api 条目继承"（去掉"条目 2"这个具名引用）。两种改法都需同步修改 spec 中冻结的替换文本。
+11. **§七 示例第 3 条括注冗余：** L319 `淘汰 [d3]（scope_files 中未找到同名函数定义）` 的括注与 §三 L239 的 `[d3]` 文案逐字重复（仅少 tag），不提供 tag 之外的增量信息；同示例中另两条括注（第 2 条补"路径已更新"、第 4 条补"条目 2"）都有增量。**决策点：** 是否删掉第 3 条括注（改为 `淘汰 [d3]`）或换成 tag 无法表达的信息（如来自 b 还是 c 入口）。需用户确认并同步 spec。
+12. **可选：§七 是否加一行 tag 指引**（如"tag 含义见第三节 c、d 分支"）。设计已明确不加对照表，此项与之一致则可不做。
 
 如发现不一致，直接修复并重新核对。
 
@@ -437,7 +440,7 @@ git commit -m "docs(api-fixer): final consistency pass for reason tags"
 1. 备份现有 fixture：`cp test_fixtures/project/.ethunter_out/api-fixer/progress.json /tmp/api-fixer-progress.baseline.json`
 2. 删除 `test_fixtures/project/.ethunter_out/api-fixer/progress.json`（`phase = "done"` 会让 skill 直接停止，必须删除才能重新分析；`inherited_apis.json` 保留，运行会覆盖）
 3. 派子代理按修改后的 `api-fixer/SKILL.md` 执行 `/api-fixer test_fixtures/project`（子代理需完整读取 SKILL.md 后按其流程处理 10 条 `old_api.json` 条目）
-4. 核对新输出的 10 条 `reason`：tag 序列与 fixture 逐条一致（`[c1]`×5、`[d1]`×1、`[d2]`×1、`[d3]`×3），且每条 tag 对应的分支与 TEST_PLAN.md 的场景描述相符
+4. 核对新输出的 10 条 `reason`：先做逐字节比对（`git diff` 新旧 progress.json 的每条 `reason`，检查方括号、tag 后空格、全角标点），再确认 tag 序列与 fixture 逐条一致（`[c1]`×5、`[d1]`×1、`[d2]`×1、`[d3]`×3），且每条 tag 对应的分支与 TEST_PLAN.md 的场景描述相符。**不得只肉眼扫一遍 tag 名称**——fixture 的 reason 是脚本手写的，只有逐字节比对才能证明模型能原样复现
 5. 核对 `inherited_apis.json` 仍为 6 条，与 `test_fixtures/expected/api-fixer/inherited_apis.json` 一致
 6. 若新输出与 fixture 有合理差异（如 d2 命中的文件不同），保留实测输出作为新 fixture 并提交；若完全一致则无需再提交
 
