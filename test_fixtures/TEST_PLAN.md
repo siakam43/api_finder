@@ -19,7 +19,7 @@ test_fixtures/project/
 | 2 | 路径在范围，函数已迁移 | handler_func_b → core/dispatcher.c (实际在 comm/) | inherited, path_updated=true, `[d2]` |
 | 3 | 路径在范围，函数已删除 | handler_func_c → core/dispatcher.c (不存在) | eliminated, `[d3]` |
 | 4 | 路径不在范围（文件不存在），fallback 无结果 | legacy_handler → core/legacy.c | eliminated, `[d3]` |
-| 5 | 同名去重：第一个继承，第二个淘汰 | duplicate_name ×2 | 1 inherited `[c1]` + 1 eliminated `[d1]` |
+| 5 | 同名去重：第一个继承，第二个淘汰（第二个条目指向的文件在 scope 内但不定义该函数） | duplicate_name ×2 | 1 inherited `[c1]` + 1 eliminated `[d1]` |
 | 6 | 绝对路径，正常继承 | process_ipc_message | inherited, `[c1]` |
 | 7 | 相对路径，正常化后继承 | read_from_shared_memory (相对路径) | inherited, `[c1]` |
 | 8 | 相对路径，正常化后继承 | handle_ipc_queue (相对路径) | inherited, `[c1]` |
