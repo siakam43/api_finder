@@ -144,7 +144,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 }
 ```
 
-`results` 中每个条目的字段含义与 api-finder 的 inherit_result.json 一致：
+`results` 中每个条目的字段含义：
 - `name`：函数名
 - `original_file`：old_api.json 中的原始 file 值
 - `file`：最终确定的文件绝对路径
