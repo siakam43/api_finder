@@ -226,17 +226,17 @@ Step 2 — 逐条目处理。对每个待处理条目（如从断点恢复，仅
      检查 progress.results 中是否已有同名且 result = "inherited" 的条目？
      ├── 已有同名继承 → 淘汰。记录：
      │     result = "eliminated", path_updated = false,
-     │     reason = "[fallback] 函数定义未在原路径对应的文件中找到，且同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
+     │     reason = "[d1] 同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
      │     处理下一条。
      └── 无同名继承 → 在 scope_files 中搜索该函数定义。
            使用"搜索函数定义的方法"在 <project_dir> 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
            ├── 找到一个或多个 → 取第一个匹配的文件。记录：
            │     path_updated = true, file = 新找到的绝对路径,
-           │     reason = "原路径对应的文件中未找到函数定义，在 scope_files 中找到同名函数定义于 <新路径>"
+           │     reason = "[d2] 在 scope_files 中找到同名函数定义于 <新路径>"
            │     result = "inherited"
            └── 未找到 → 淘汰。记录：
                  result = "eliminated", path_updated = false,
-                 reason = "[fallback] 函数定义未在原路径对应的文件中找到，且 scope_files 中未找到同名函数定义"
+                 reason = "[d3] scope_files 中未找到同名函数定义"
 
   将本条处理记录追加到 progress.results，更新 progress.processed += 1。
   **每处理完一条立即保存 progress.json**，防止中断丢失进度。
