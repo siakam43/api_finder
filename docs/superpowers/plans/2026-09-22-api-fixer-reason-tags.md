@@ -75,7 +75,7 @@
 - 字段说明不再出现"淘汰原因"，不再声称 inherited 时为 null
 - 字段说明指向"第三节 c、d 分支"作为 tag 取值来源
 - Step 2c 存在分支的 `result` 仍为 `"inherited"`、`path_updated` 仍为 `false`
-- 全文 `null` 出现次数由 3 次降为 0 次（用 `grep -c 'null' api-fixer/SKILL.md` 应为 0）
+- 全文不再出现 `null` 取值：`grep -n 'null' api-fixer/SKILL.md` 仅剩 1 处，即 L153 字段说明末尾的措辞"所有条目均非 null"（该措辞本身含 null 二字，属预期，不计为残留）；`grep -c 'reason = null' api-fixer/SKILL.md` 应为 0
 
 ```bash
 git add api-fixer/SKILL.md
@@ -401,7 +401,9 @@ git commit -m "test(api-fixer): record expected reason tags in test plan"
 4. §七 首次分析：5 条输出带 tag，映射为 1→c1、2→d2、3→d3、4→d1、15→c1
 5. §七 断点续分析：2 条输出带 `[c1]`
 6. 全文无残留 `[fallback]`，无残留 `reason = null`
-7. 全文无与本次修改矛盾的段落——重点检查 §四 约束规则第 4 条"严格按照 a → b → c → d 顺序"、§六 抗理性化检查表、§二 入口恢复流程（均只描述流程与步骤，不涉及 reason 取值，应无需改动）
+7. 全文无与本次修改矛盾的段落——§四 约束规则第 4 条"严格按照 a → b → c → d 顺序"、§六 抗理性化检查表（均只描述流程与步骤，不涉及 reason 取值，应无需改动）
+8. **恢复路径与 L153 断言的矛盾：** §二 入口恢复流程会原样保留 `results` 中已处理的条目（L170-173"保留已处理结果，跳过"），而 §二 给出的唯一补救（L167-168）只针对 `phase = "done"`。若传入的是改动前写的 `progress.json`（`phase = "processing"`，含 `null` / `[fallback]` / 无 tag 的 d2 文案），恢复后文件会混合旧值与新 tag，与 L153 新增的"所有条目均非 null / 格式为 `"[tag] 说明"`"矛盾。spec 影响范围已声明"不考虑历史结果兼容"，但该决定未写进 SKILL.md。**决策点：** 是否在 §二 补一句"改动前生成的 progress.json 不做迁移，需删除后重新分析"（属新增范围，需用户确认后再改，不得擅自加）。
+9. **用词一致性：** L141 用"判定依据"、L153 用"说明"指同一位置，违反 §四 规则 6"相同语义的用词前后保持一致"。统一为同一个词（建议"判定依据"），spec 中对应措辞一并同步。
 
 如发现不一致，直接修复并重新核对。
 
