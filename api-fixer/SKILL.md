@@ -61,7 +61,7 @@ description: Use when the user invokes /api-fixer or asks to fix stale file path
 用两种方法确认 `<project_dir>/.ethunter_out/.etignore` 是否存在。确认存在后，读取 .etignore，理解其排除规则（语法与 .gitignore 一致）。然后运行以下命令收集 project_dir 下全部 .c 和 .h 文件：
 
 ```bash
-find <project_dir> -type f \( -name "*.c" -o -name "*.h" \)
+find <project_dir> -type f \( -name "*.c" -o -name "*.h" \) -not -path "*/.ethunter_out/*"
 ```
 
 将结果与 .etignore 规则进行匹配，排除被忽略的文件或目录下的文件，剩余文件作为分析范围。
@@ -71,7 +71,7 @@ find <project_dir> -type f \( -name "*.c" -o -name "*.h" \)
 运行以下命令：
 
 ```bash
-find <project_dir> -type f \( -name "*.c" -o -name "*.h" \)
+find <project_dir> -type f \( -name "*.c" -o -name "*.h" \) -not -path "*/.ethunter_out/*"
 ```
 
 收集全部 .c 和 .h 文件作为分析范围。
@@ -136,7 +136,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
   "total": 15,
   "processed": 0,
   "results": [
-    {"name": "func_a", "original_file": "old_api原始值", "file": "最终绝对路径",
+    {"name": "func_a", "original_file": "old_api原始值", "file": "最终绝对路径|null",
      "result": "inherited|eliminated", "path_updated": true|false,
      "reason": "[tag] 判定依据"},
     ...
@@ -147,9 +147,9 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
 `results` 中每个条目的字段含义：
 - `name`：函数名
 - `original_file`：old_api.json 中的原始 file 值
-- `file`：最终确定的文件绝对路径
+- `file`：最终确定的文件绝对路径；淘汰条目为 `null`
 - `result`：`"inherited"`（继承）或 `"eliminated"`（淘汰）
-- `path_updated`：`true` 表示路径在 fallback 搜索中被更新，`false` 表示路径未变
+- `path_updated`：`true` 表示路径在 fallback 搜索中被更新，`false` 表示路径未变。a 步的路径规范化（相对路径转绝对路径）不算更新，仍记 `false`
 - `reason`：判定依据，格式为 `"[tag] 判定依据"`（tag 取值见第三节 c、d 分支），所有条目均非 null
 
 ### 入口恢复流程
@@ -172,7 +172,7 @@ mkdir -p <project_dir>/.ethunter_out/api-fixer
    ├── 已在 results 中 → 保留已处理结果，跳过
    └── 不在 results 中 → 作为待处理条目
 
-4. 待处理条目为空 → 全部已处理，跳到 Step 3（输出结果）
+4. 待处理条目为空 → 全部已处理，跳到第三节的 Step 3（输出结果）
    待处理条目非空 → 继续第三节
 ```
 
@@ -225,17 +225,18 @@ Step 2 — 逐条目处理。对每个待处理条目（如从断点恢复，仅
   d. fallback 搜索：
      检查 progress.results 中是否已有同名且 result = "inherited" 的条目？
      ├── 已有同名继承 → 淘汰。记录：
-     │     result = "eliminated", path_updated = false,
+     │     result = "eliminated", path_updated = false, file = null,
      │     reason = "[d1] 同名函数 <name> 已被其他 old_api 条目继承（文件：<已有条目file>），跳过 fallback"
      │     处理下一条。
      └── 无同名继承 → 在 scope_files 中搜索该函数定义。
-           使用"搜索函数定义的方法"在 <project_dir> 中搜索，并只保留文件路径在 scope_files 中的匹配结果。
+           使用"搜索函数定义的方法"在 <project_dir> 中搜索（跳过 <project_dir>/.ethunter_out/ 目录，
+           避免把 old_api.json 和历史结果文件扫入上下文），并只保留文件路径在 scope_files 中的匹配结果。
            ├── 找到一个或多个 → 取第一个匹配的文件。记录：
            │     path_updated = true, file = 新找到的绝对路径,
            │     reason = "[d2] 在 scope_files 中找到同名函数定义于 <新路径>"
            │     result = "inherited"
            └── 未找到 → 淘汰。记录：
-                 result = "eliminated", path_updated = false,
+                 result = "eliminated", path_updated = false, file = null,
                  reason = "[d3] scope_files 中未找到同名函数定义"
 
   将本条处理记录追加到 progress.results，更新 progress.processed += 1。
@@ -261,7 +262,7 @@ Step 3 — 输出结果：
 
 4. **按设计流程的指定顺序执行。** 严格按照 a → b → c → d 顺序，不跳过不合并。
 
-5. **文件绝对路径。** inherited_apis.json 和 progress.json 中的 file 字段一律使用绝对路径。
+5. **文件绝对路径。** inherited_apis.json 和 progress.json 中继承条目的 file 字段一律使用绝对路径；淘汰条目为 `null`。
 
 6. **整个 skill 提示词用中文。** 相同语义的用词前后保持一致。
 
