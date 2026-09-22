@@ -264,7 +264,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
   "summary": "<一句话描述该注册模式>",
   "source_seed": "<当前种子函数名>",
   "details": {
-    "type": "static|dynamic",
+    "type": "sta_reg|dyn_reg",
     ...<根据类型填写具体字段>
   }
 }
@@ -273,7 +273,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 **静态注册的 details：**
 ```json
 {
-  "type": "static",
+  "type": "sta_reg",
   "var_type": "<全局变量类型名>",
   "var_name": "<全局变量名>",
   "binding_field": "<被绑定的字段名>"
@@ -283,7 +283,7 @@ mkdir -p <project_dir>/.ethunter_out/api-finder/tmp
 **动态注册的 details：**
 ```json
 {
-  "type": "dynamic",
+  "type": "dyn_reg",
   "register_func": "<注册函数名>",
   "callback_param_index": <参数位置(1-based)>
 }
@@ -302,7 +302,7 @@ details 字段可扩展。当遇到类型不匹配的注册模式（如间接注
 
    去重时需要深度理解代码语义：
    - 比较每对 pattern 的 details 字段
-   - 两个 pattern 同类型（都是 static 或都是 dynamic）且共享相同的注册载体（同一个 `var_type` + `var_name`，或同一个 `register_func`）→ 合并
+   - 两个 pattern 同类型（都是 sta_reg 或都是 dyn_reg）且共享相同的注册载体（同一个 `var_type` + `var_name`，或同一个 `register_func`）→ 合并
    - 合并后更新 summary，说明该模式来自多个种子接口
 
    去重后为每个 pattern 重新分配独立编号（从 1 开始）。
