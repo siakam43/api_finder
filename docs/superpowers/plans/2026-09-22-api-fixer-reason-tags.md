@@ -531,8 +531,10 @@ git commit -m "test(api-fixer): drop duplicate definition so the d1 dedup path i
 在 `api-fixer/SKILL.md` §六 表格末尾（"这个状态文件检查结果不太确定，先继续吧"那一行之后）追加一行：
 
 ```
-| "reason 随便写一句就行" | 必须使用 [c1]/[d1]/[d2]/[d3] 四种 tag 之一，格式为 `[tag] 空格 说明`（见第三节 c、d 分支）。 |
+| "reason 随便写一句就行" | 必须使用 [c1]/[d1]/[d2]/[d3] 四种 tag 之一，文案逐字采用第三节 c、d 分支的模板。 |
 ```
+
+该行不复述格式措辞（原写法含"说明"，会与 Step 1 统一后的"判定依据"冲突），改为指向第三节模板这个唯一事实来源。spec 的"变更清单"同步补一条 §六 小节的 旧/新记录。
 
 - [ ] **Step 5: 重读全文，逐项核对 Spec**
 
@@ -544,7 +546,7 @@ git commit -m "test(api-fixer): drop duplicate definition so the d1 dedup path i
 4. §七 首次分析：5 条输出带 tag，映射为 1→c1、2→d2、3→d3、4→d1、15→c1；第 3 条无括注，第 4 条函数名为 `func_b`（与条目 2 同名）
 5. §七 断点续分析：2 条输出带 `[c1]`
 6. 全文无残留 `[fallback]`，无残留 `reason = null`
-7. §六 抗理性化检查表含 tag 契约行
+7. §六 抗理性化检查表含 tag 契约行，且该行不含"说明"字样（与 Step 1 统一后的"判定依据"措辞一致；该行通过指向第三节模板来规避重复措辞）
 8. §四 约束规则第 4 条"严格按照 a → b → c → d 顺序"未改动（只描述流程，不涉及 reason 取值）
 9. **已决议不做：** §二 入口恢复流程不补"历史 progress.json 不做迁移"说明（用户确认保持最小改动）
 
