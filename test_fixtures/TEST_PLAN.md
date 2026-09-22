@@ -15,15 +15,15 @@ test_fixtures/project/
 
 | # | 场景 | old_api 条目 | 预期结果 |
 |---|------|-------------|---------|
-| 1 | 路径在范围，函数定义存在 | handle_user_request → core/dispatcher.c | inherited, path unchanged |
-| 2 | 路径在范围，函数已迁移 | handler_func_b → core/dispatcher.c (实际在 comm/) | inherited, path_updated=true |
-| 3 | 路径在范围，函数已删除 | handler_func_c → core/dispatcher.c (不存在) | eliminated |
-| 4 | 路径不在范围（文件不存在），fallback 无结果 | legacy_handler → core/legacy.c | eliminated |
-| 5 | 同名去重：第一个继承，第二个淘汰 | duplicate_name ×2 | 1 inherited + 1 eliminated |
-| 6 | 绝对路径，正常继承 | process_ipc_message | inherited |
-| 7 | 相对路径，正常化后继承 | read_from_shared_memory (相对路径) | inherited |
-| 8 | 相对路径，正常化后继承 | handle_ipc_queue (相对路径) | inherited |
-| 9 | 文件不存在，fallback 无结果 | deleted_api → core/removed.c | eliminated |
+| 1 | 路径在范围，函数定义存在 | handle_user_request → core/dispatcher.c | inherited, path unchanged, `[c1]` |
+| 2 | 路径在范围，函数已迁移 | handler_func_b → core/dispatcher.c (实际在 comm/) | inherited, path_updated=true, `[d2]` |
+| 3 | 路径在范围，函数已删除 | handler_func_c → core/dispatcher.c (不存在) | eliminated, `[d3]` |
+| 4 | 路径不在范围（文件不存在），fallback 无结果 | legacy_handler → core/legacy.c | eliminated, `[d3]` |
+| 5 | 同名去重：第一个继承，第二个淘汰 | duplicate_name ×2 | 1 inherited `[c1]` + 1 eliminated `[d1]` |
+| 6 | 绝对路径，正常继承 | process_ipc_message | inherited, `[c1]` |
+| 7 | 相对路径，正常化后继承 | read_from_shared_memory (相对路径) | inherited, `[c1]` |
+| 8 | 相对路径，正常化后继承 | handle_ipc_queue (相对路径) | inherited, `[c1]` |
+| 9 | 文件不存在，fallback 无结果 | deleted_api → core/removed.c | eliminated, `[d3]` |
 
 **预期 api-fixer inherited_apis.json: 6 个条目**
 
@@ -57,8 +57,11 @@ test_fixtures/project/
 
 ## 运行方式
 
+**运行前必须删除目标 skill 的 `progress.json`。** fixture 中的 `progress.json` 是 `phase = "done"` 的录制结果，skill 读到会直接停止并告知"分析已完成"，不会重新分析——照下面的命令直接跑会得到假绿。输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
+
 ```
 # 1. api-fixer
+rm test_fixtures/project/.ethunter_out/api-fixer/progress.json
 /api-fixer test_fixtures/project
 
 # 2. api-finder (依赖 api-fixer 输出)
