@@ -19,8 +19,3 @@ int handler_func_b(int msg_type, void *msg_data) {
     if (msg_type == 0) return -1;
     return 0;
 }
-
-// duplicate_name 的第二个定义（与 core/dispatcher.c 冲突——实际编译不会同时存在，但用于测试同名去重逻辑）
-int duplicate_name(int mode) {
-    return mode + 1;
-}
