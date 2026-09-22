@@ -370,45 +370,196 @@ git commit -m "test(api-fixer): update progress fixture for per-case reason tags
 | 9 | 文件不存在，fallback 无结果 | deleted_api → core/removed.c | eliminated, `[d3]` |
 ```
 
-- [ ] **Step 2: 验证并提交**
+- [ ] **Step 2: 在"运行方式"补运行前置条件**
 
-用 Read 重读 `test_fixtures/TEST_PLAN.md` 的 14-28 行。核对点：
+将：
+
+```markdown
+## 运行方式
+
+```
+# 1. api-fixer
+/api-fixer test_fixtures/project
+```
+
+替换为（三个 skill 的运行步骤保持原样，只加前置说明与 api-fixer 的删除命令）：
+
+```markdown
+## 运行方式
+
+**运行前必须删除目标 skill 的 `progress.json`。** fixture 中的 `progress.json` 是 `phase = "done"` 的录制结果，skill 读到会直接停止并告知"分析已完成"，不会重新分析——照下面的命令直接跑会得到假绿。输出文件（`inherited_apis.json` / `api.json` / `api_clean.json`）可直接覆盖，无需删除。
+
+```
+# 1. api-fixer
+rm test_fixtures/project/.ethunter_out/api-fixer/progress.json
+/api-fixer test_fixtures/project
+```
+
+- [ ] **Step 3: 验证并提交**
+
+用 Read 重读 `test_fixtures/TEST_PLAN.md` 的 14-28 行与"运行方式"章节。核对点：
 
 - 9 行的预期结果列全部带 tag，取值与 fixture progress.json 的 10 条一致（用例 5 对应 2 条）
 - 列分隔符与表头行对齐，加 tag 后每行仍为 4 列
 - "**预期 api-fixer inherited_apis.json: 6 个条目**"未改动（该文件只含 name + file，不受 reason 变更影响）
 - 场景列文案未改动
+- "运行方式"含删除 `progress.json` 的前置说明，api-finder / api-cleaner 两条命令未被误改
 
 ```bash
 git add test_fixtures/TEST_PLAN.md
-git commit -m "test(api-fixer): record expected reason tags in test plan"
+git commit -m "test(api-fixer): record expected reason tags and run precondition in test plan"
 ```
 
 ---
 
-### Task 6: 全文一致性核对与最终提交
+### Task 6: 删除 fixture 中的重复定义，使 [d1] 分支可达
+
+**Files:**
+- Modify: `test_fixtures/project/comm/msg_handler.c`（末尾 23-26 行）
+
+**背景：** fixture 第 6 条（`duplicate_name` → `comm/msg_handler.c`）录制为淘汰 `[d1]`，但该文件在 scope_files 中且第 24 行有函数体定义，按 §三 流程 b→c 都会通过，应得继承 `[c1]`——`[d1]` 分支当前不可达，端到端验收必然失败。删除该重复定义后，第 6 条变为 b 通过 → c 无定义 → d，此时第 5 条（`duplicate_name` → `core/dispatcher.c`）已继承 → 正确得到 `[d1]`，与录制值一致。`comm/msg_handler.h` 的声明保留（以 `;` 结尾，两步法不视为定义）。
+
+- [ ] **Step 1: 删除末尾的重复定义**
+
+用 Read 确认 `test_fixtures/project/comm/msg_handler.c` 末尾（约 22-27 行）后，删除该注释行与函数体共 4 行：
+
+```c
+// duplicate_name 的第二个定义（与 core/dispatcher.c 冲突——实际编译不会同时存在，但用于测试同名去重逻辑）
+int duplicate_name(int mode) {
+    return mode + 1;
+}
+```
+
+删除后文件以 `handler_func_b` 的闭合大括号结束，保留文件末尾单个换行。不改动文件其他任何内容。
+
+- [ ] **Step 2: 验证**
+
+```bash
+grep -rn "duplicate_name" test_fixtures/ | sed 's/^/  /'
+```
+
+核对点：
+
+- `test_fixtures/project/comm/msg_handler.c` **不再出现** `duplicate_name`
+- 仍出现：`comm/msg_handler.h:7`（声明）、`core/dispatcher.c:45-46`（定义）、`.ethunter_out/old_api.json` 两条、`.ethunter_out/api-fixer/progress.json` 两条、`expected/api-fixer/inherited_apis.json` 一条、`TEST_PLAN.md` 用例 5
+- 其余文件未变动：`git diff --stat` 仅 `comm/msg_handler.c` 一个文件
+
+- [ ] **Step 3: 确认未波及其他 fixture**
+
+```bash
+grep -rn "duplicate_name" test_fixtures/expected/ test_fixtures/project/.ethunter_out/api-finder/ test_fixtures/project/.ethunter_out/api-cleaner/ test_fixtures/project/.ethunter_out/api-archreader/
+```
+
+核对点：无输出。`duplicate_name` 只被 api-fixer 的 fixture 引用，api-finder / api-cleaner / api-archreader 的预期输出均不涉及它，删除定义不影响它们的基线。
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add test_fixtures/project/comm/msg_handler.c
+git commit -m "test(api-fixer): drop duplicate definition so the d1 dedup path is reachable"
+```
+
+---
+
+### Task 7: 全文一致性核对与最终提交
 
 **Files:**
 - Review: `api-fixer/SKILL.md`（全文）
+- Modify: `api-fixer/SKILL.md`（第 141 行、第 319-320 行、§六 检查表）
+- Modify: `docs/superpowers/specs/2026-09-22-api-fixer-reason-tags-design.md`（同步冻结的替换文本）
 
-- [ ] **Step 1: 重读全文，逐项核对 Spec**
+- [ ] **Step 1: 用词统一为"判定依据"**
+
+将 L141 的：
+
+```
+     "reason": "[tag] 判定依据"},
+```
+
+与 L153 的：
+
+```markdown
+- `reason`：判定依据，格式为 `"[tag] 说明"`（tag 取值见第三节 c、d 分支），所有条目均非 null
+```
+
+统一：L153 的 `"[tag] 说明"` 改为 `"[tag] 判定依据"`（L141 已是"判定依据"，不动）。同步修改 spec 中对应的两处措辞。
+
+- [ ] **Step 2: 修 §七 示例第 4 条的同名逻辑**
+
+将 L320：
+
+```
+    → 条目 4/15: func_d — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）
+```
+
+改为：
+
+```
+    → 条目 4/15: func_b — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）
+```
+
+理由：条目 2 是 `func_b`，`[d1]` 的定义要求"同名"。改成同名后示例自洽，且正好演示同名去重（与 fixture 的 `duplicate_name` 用例同构）。同步修改 spec 中冻结的替换文本。
+
+- [ ] **Step 3: 删 §七 示例第 3 条的冗余括注**
+
+将 L319：
+
+```
+    → 条目 3/15: func_c — 淘汰 [d3]（scope_files 中未找到同名函数定义）
+```
+
+改为：
+
+```
+    → 条目 3/15: func_c — 淘汰 [d3]
+```
+
+理由：该括注与 §三 L239 的 `[d3]` 文案逐字重复，不含 tag 之外的增量信息；同示例第 2 条（补"路径已更新"）、第 4 条（补"同名函数已被条目 2 继承"）的括注都有增量。同步修改 spec 中冻结的替换文本。
+
+- [ ] **Step 4: §六 抗理性化检查表加一行 tag 契约**
+
+在 `api-fixer/SKILL.md` §六 表格末尾（"这个状态文件检查结果不太确定，先继续吧"那一行之后）追加一行：
+
+```
+| "reason 随便写一句就行" | 必须使用 [c1]/[d1]/[d2]/[d3] 四种 tag 之一，格式为 `[tag] 空格 说明`（见第三节 c、d 分支）。 |
+```
+
+- [ ] **Step 5: 重读全文，逐项核对 Spec**
 
 用 Read 通读整个 `api-fixer/SKILL.md`，按以下清单核对（对应 spec `docs/superpowers/specs/2026-09-22-api-fixer-reason-tags-design.md`）：
 
-1. §二 字段说明：`reason` 定义为"判定依据，格式为 `"[tag] 说明"`（tag 取值见第三节 c、d 分支），所有条目均非 null"
+1. §二 字段说明：`reason` 定义为"判定依据，格式为 `"[tag] 判定依据"`（tag 取值见第三节 c、d 分支），所有条目均非 null"；L141 与 L153 用词一致
 2. §三 Step 2c：存在分支 reason = `"[c1] 原路径在分析范围内，且函数定义存在"`
 3. §三 Step 2d：d1/d2/d3 三条 reason 与 spec 的 tag 对照表逐字一致
-4. §七 首次分析：5 条输出带 tag，映射为 1→c1、2→d2、3→d3、4→d1、15→c1
+4. §七 首次分析：5 条输出带 tag，映射为 1→c1、2→d2、3→d3、4→d1、15→c1；第 3 条无括注，第 4 条函数名为 `func_b`（与条目 2 同名）
 5. §七 断点续分析：2 条输出带 `[c1]`
 6. 全文无残留 `[fallback]`，无残留 `reason = null`
-7. 全文无与本次修改矛盾的段落——§四 约束规则第 4 条"严格按照 a → b → c → d 顺序"、§六 抗理性化检查表（均只描述流程与步骤，不涉及 reason 取值，应无需改动）
-8. **恢复路径与 L153 断言的矛盾：** §二 入口恢复流程会原样保留 `results` 中已处理的条目（L170-173"保留已处理结果，跳过"），而 §二 给出的唯一补救（L167-168）只针对 `phase = "done"`。若传入的是改动前写的 `progress.json`（`phase = "processing"`，含 `null` / `[fallback]` / 无 tag 的 d2 文案），恢复后文件会混合旧值与新 tag，与 L153 新增的"所有条目均非 null / 格式为 `"[tag] 说明"`"矛盾。spec 影响范围已声明"不考虑历史结果兼容"，但该决定未写进 SKILL.md。**决策点：** 是否在 §二 补一句"改动前生成的 progress.json 不做迁移，需删除后重新分析"（属新增范围，需用户确认后再改，不得擅自加）。
-9. **用词一致性：** L141 用"判定依据"、L153 用"说明"指同一位置，违反 §四 规则 6"相同语义的用词前后保持一致"。统一为同一个词（建议"判定依据"），spec 中对应措辞一并同步。
-10. **§七 示例第 4 条与 `[d1]` 定义自相矛盾：** L320 为 `→ 条目 4/15: func_d — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）`，但条目 2 是 `func_b`、条目 4 是 `func_d`，二者不同名；而 §三 L229 的 `[d1]` 定义为"同名函数 <name> 已被其他 old_api 条目继承"。该行按现有措辞不可达。**决策点（改法二选一，需用户确认）：** (a) 把条目 4 的函数名改为 `func_b`（与条目 2 同名，示例自洽）；(b) 把括注改为"同名函数已被其他 old_api 条目继承"（去掉"条目 2"这个具名引用）。两种改法都需同步修改 spec 中冻结的替换文本。
-11. **§七 示例第 3 条括注冗余：** L319 `淘汰 [d3]（scope_files 中未找到同名函数定义）` 的括注与 §三 L239 的 `[d3]` 文案逐字重复（仅少 tag），不提供 tag 之外的增量信息；同示例中另两条括注（第 2 条补"路径已更新"、第 4 条补"条目 2"）都有增量。**决策点：** 是否删掉第 3 条括注（改为 `淘汰 [d3]`）或换成 tag 无法表达的信息（如来自 b 还是 c 入口）。需用户确认并同步 spec。
-12. **可选：§七 是否加一行 tag 指引**（如"tag 含义见第三节 c、d 分支"）。设计已明确不加对照表，此项与之一致则可不做。
+7. §六 抗理性化检查表含 tag 契约行
+8. §四 约束规则第 4 条"严格按照 a → b → c → d 顺序"未改动（只描述流程，不涉及 reason 取值）
+9. **已决议不做：** §二 入口恢复流程不补"历史 progress.json 不做迁移"说明（用户确认保持最小改动）
 
 如发现不一致，直接修复并重新核对。
+
+- [ ] **Step 6: 核对无遗留**
+
+```bash
+grep -rn 'fallback\]' api-fixer/SKILL.md test_fixtures/; echo "--- 应为空 ---"; grep -n 'func_d' api-fixer/SKILL.md; echo "--- 应为空 ---"
+```
+
+核对点：
+
+- 第一条 grep 无输出（spec 中的 `[fallback]` 命中属描述旧状态，未列入本次 grep 范围）
+- 第二条 grep 无输出（`func_d` 已改名为 `func_b`）
+- `api-fixer/SKILL.md` 中 d1 的"跳过 fallback"与 `test_fixtures/TEST_PLAN.md` 场景列中的"fallback 无结果"不含方括号，不属命中，本次不改（fallback 仍是 d 步的步骤名）
+
+- [ ] **Step 7: 最终提交**
+
+```bash
+git add api-fixer/SKILL.md docs/superpowers/specs/2026-09-22-api-fixer-reason-tags-design.md
+git commit -m "docs(api-fixer): final consistency pass for reason tags"
+```
+
+（若 Step 1-4 无改动，跳过本次提交，报告即可。）
 
 - [ ] **Step 2: 核对待办项缺失**
 
@@ -442,6 +593,6 @@ git commit -m "docs(api-fixer): final consistency pass for reason tags"
 3. 派子代理按修改后的 `api-fixer/SKILL.md` 执行 `/api-fixer test_fixtures/project`（子代理需完整读取 SKILL.md 后按其流程处理 10 条 `old_api.json` 条目）
 4. 核对新输出的 10 条 `reason`：先做逐字节比对（`git diff` 新旧 progress.json 的每条 `reason`，检查方括号、tag 后空格、全角标点），再确认 tag 序列与 fixture 逐条一致（`[c1]`×5、`[d1]`×1、`[d2]`×1、`[d3]`×3），且每条 tag 对应的分支与 TEST_PLAN.md 的场景描述相符。**不得只肉眼扫一遍 tag 名称**——fixture 的 reason 是脚本手写的，只有逐字节比对才能证明模型能原样复现
 5. 核对 `inherited_apis.json` 仍为 6 条，与 `test_fixtures/expected/api-fixer/inherited_apis.json` 一致
-6. 若新输出与 fixture 有合理差异（如 d2 命中的文件不同），保留实测输出作为新 fixture 并提交；若完全一致则无需再提交
+6. **本次期望完全一致、零差异。** Task 6 删除重复定义后，10 条录制的判定全部可由现流程复现。若出现任何差异，先判定是模型执行偏差还是流程/文档缺陷：前者重跑（可提高子代理能力档位），后者回到 Task 7 修复文档。不得把差异直接"改 fixture 迁就"。
 
-端到端跑通仅验证两条真实入口路径（b 入口：`legacy_handler`、`deleted_api`；c 入口：`handler_func_c`），四种 tag 均被覆盖。
+端到端覆盖情况：b 入口进 d 两条（`legacy_handler`、`deleted_api` → `[d3]`）；c 入口失败进 d 两条（`handler_func_c` → `[d3]`，`duplicate_name`/comm → `[d1]`）；c 入口成功继一条（多条 `[c1]`）；`[d2]` 一条（`handler_func_b`）。**四种 tag 全部有真实覆盖**（Task 6 之前 `[d1]` 无法覆盖，这正是删除重复定义的原因）。
