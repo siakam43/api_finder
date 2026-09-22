@@ -38,7 +38,14 @@ api-fixer §三 流程 Step 2 的 c、d 两步在 `progress.json` 的 `reason` �
 
 ## 变更清单
 
-### SKILL.md §二 progress.json 结构（reason 字段说明）
+### SKILL.md §二 progress.json 结构（结构示例 + reason 字段说明）
+
+结构示例中 `reason` 的取值从 `null|<处理原因>` 改为 tag 模板：
+
+- 旧：`     "reason": null|"<处理原因>"},`
+- 新：`     "reason": "[tag] 判定依据"},`
+
+字段说明改为：
 
 - 旧：``- `reason`：淘汰原因（`result = "inherited"` 时为 `null`；`result = "eliminated"` 时为具体淘汰理由）``
 - 新：``- `reason`：判定依据，格式为 `"[tag] 说明"`（tag 取值见第三节 c、d 分支），所有条目均非 null``
