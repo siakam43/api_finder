@@ -32,7 +32,7 @@ api-fixer §三 流程 Step 2 的 c、d 两步在 `progress.json` 的 `reason` �
 `<project_dir>/.ethunter_out/api-fixer/progress.json` 的 `reason` 字段：
 
 - 旧：`reason`：淘汰原因（`result = "inherited"` 时为 `null`；`result = "eliminated"` 时为具体淘汰理由）
-- 新：`reason`：判定依据，格式为 `"[tag] 说明"`（tag 取值见 c、d 分支），**所有条目均非 null**
+- 新：`reason`：判定依据，格式为 `"[tag] 判定依据"`（tag 取值见 c、d 分支），**所有条目均非 null**
 
 `results` 条目其余字段（`name` / `original_file` / `file` / `result` / `path_updated`）不变。
 
@@ -48,7 +48,7 @@ api-fixer §三 流程 Step 2 的 c、d 两步在 `progress.json` 的 `reason` �
 字段说明改为：
 
 - 旧：``- `reason`：淘汰原因（`result = "inherited"` 时为 `null`；`result = "eliminated"` 时为具体淘汰理由）``
-- 新：``- `reason`：判定依据，格式为 `"[tag] 说明"`（tag 取值见第三节 c、d 分支），所有条目均非 null``
+- 新：``- `reason`：判定依据，格式为 `"[tag] 判定依据"`（tag 取值见第三节 c、d 分支），所有条目均非 null``
 
 ### SKILL.md §三 流程 Step 2c
 
@@ -81,10 +81,10 @@ api-fixer §三 流程 Step 2 的 c、d 两步在 `progress.json` 的 `reason` �
 - 新：`→ 条目 2/15: func_b — 继承 [d2]（fallback 搜索到新路径，路径已更新）`
 
 - 旧：`→ 条目 3/15: func_c — 淘汰（函数定义未找到，scope_files 中也无同名函数）`
-- 新：`→ 条目 3/15: func_c — 淘汰 [d3]（scope_files 中未找到同名函数定义）`
+- 新：`→ 条目 3/15: func_c — 淘汰 [d3]`
 
 - 旧：`→ 条目 4/15: func_d — 淘汰（同名函数已被条目 2 继承，跳过 fallback）`
-- 新：`→ 条目 4/15: func_d — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）`
+- 新：`→ 条目 4/15: func_b — 淘汰 [d1]（同名函数已被条目 2 继承，跳过 fallback）`
 
 - 旧：`→ 条目 15/15: func_o — 继承（路径在范围且函数定义存在）`
 - 新：`→ 条目 15/15: func_o — 继承 [c1]`
